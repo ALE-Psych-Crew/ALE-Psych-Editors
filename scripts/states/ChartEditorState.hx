@@ -59,13 +59,16 @@ function updateMusic()
         else
             music.resume();
 
-    if (Controls.UI_UP_P || Controls.UI_DOWN_P)
+    if (Controls.UI_UP_P || Controls.UI_DOWN_P || Controls.MOUSE_WHEEL)
         if (music.playing)
             music.pause();
 
     if (Controls.UI_UP || Controls.UI_DOWN)
         music.time = FlxMath.bound(music.time + MUSIC_CHANGE * (Controls.UI_UP ? -1 : 1), 0, music.length);
     
+    if (Controls.MOUSE_WHEEL)
+        music.time = FlxMath.bound(music.time + Conductor.stepCrochet * (Controls.MOUSE_WHEEL_UP ? -1 : 1), 0, music.length);
+
     camGame.scroll.y = -LINE_POS + musicY;
 }
 
