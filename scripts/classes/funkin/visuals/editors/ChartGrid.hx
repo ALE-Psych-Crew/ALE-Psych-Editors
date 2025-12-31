@@ -116,7 +116,7 @@ class ChartGrid extends ScriptSpriteGroup
                 addNote();
             } else {
                 for (note in notes)
-                    if (FlxG.mouse.overlaps(note))
+                    if (FlxG.mouse.overlaps(note.texture))
                         notes.remove(note);
             }
         }
