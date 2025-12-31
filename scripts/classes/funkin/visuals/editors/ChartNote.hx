@@ -2,11 +2,18 @@ package funkin.visuals.editors;
 
 import scripting.haxe.ScriptSpriteGroup;
 
+import ale.ui.ALEUIUtils;
+
+import funkin.visuals.shaders.RGBPalette;
+import funkin.visuals.shaders.RGBShaderReference;
+
 class ChartNote extends ScriptSpriteGroup
 {
     final NOTE_SIZE:Int;
 
-    var texture:FlxSprite;
+    public var texture:FlxSprite;
+
+    public var textureShader:RGBShaderReference;
 
     public var tail:FlxSprite;
 
@@ -23,6 +30,8 @@ class ChartNote extends ScriptSpriteGroup
         return length;
     }
 
+    public var parent:FlxSpriteGroup;
+
     public function new(data:Int, noteSize:Int, anim:String, ?time:Float, ?length:Float)
     {
         super();
@@ -35,8 +44,13 @@ class ChartNote extends ScriptSpriteGroup
         texture.animation.play('idle');
         texture.setGraphicSize(NOTE_SIZE, NOTE_SIZE);
         texture.updateHitbox();
+        
+		textureShader = new RGBShaderReference(texture, new RGBPalette());
+        textureShader.r = FlxColor.fromRGB(25, 25, 25);
+        textureShader.g = ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, 25);
+        textureShader.b = ALEUIUtils.COLOR;
 
-        tail = new FlxSprite().makeGraphic(Math.floor(NOTE_SIZE / 5), 1);
+        tail = new FlxSprite().makeGraphic(Math.floor(NOTE_SIZE / 5), 1, ALEUIUtils.COLOR);
         tail.x = texture.width / 2 - tail.width / 2;
         tail.y = texture.height / 2;
 

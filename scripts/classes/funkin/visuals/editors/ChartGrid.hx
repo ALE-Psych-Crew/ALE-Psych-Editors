@@ -71,22 +71,55 @@ class ChartGrid extends ScriptSpriteGroup
         return FlxG.mouse.getWorldPosition(cameras[0]);
     }
 
+    var input:Null<Bool> = null;
+
+    var longNoteInput:Null<ChartNote> = null;
+
     function updatePointer()
     {
         if (!pointer.exists)
             return;
 
-        if (FlxG.mouse.justPressed)
-            pointer.color = FlxColor.GRAY;
-
-        if (FlxG.mouse.justReleased)
-            pointer.color = FlxColor.WHITE;
-
         pointer.x = x + Math.floor(mousePos.x / NOTE_SIZE) * NOTE_SIZE;
         pointer.y = y + Math.floor(mousePos.y / NOTE_SIZE) * NOTE_SIZE;
 
-        if (Controls.MOUSE_P)
-            addNote();
+        if (longNoteInput != null)
+        {
+            if (pointer.y >= longNoteInput.y)
+                longNoteInput.length = (pointer.y - longNoteInput.y) / NOTE_SIZE * Conductor.stepCrochet;
+        }
+
+        if (input != null)
+            if (input)
+                input = null;
+
+        if ((FlxG.mouse.justPressed && !FlxG.mouse.pressedRight) || (FlxG.mouse.justPressedRight && !FlxG.mouse.pressed))
+        {
+            pointer.color = FlxG.mouse.justPressed ? FlxColor.GRAY : FlxColor.RED;
+
+            input = FlxG.mouse.justPressed ? true : false;
+        }
+
+        if (FlxG.mouse.justReleased || FlxG.mouse.justReleasedRight)
+        {
+            pointer.color = FlxG.mouse.pressed ? FlxColor.GRAY : FlxG.mouse.pressedRight ? FlxColor.RED : FlxColor.WHITE;
+
+            input = null;
+
+            longNoteInput = null;
+        }
+
+        if (input != null)
+        {
+            if (input)
+            {
+                addNote();
+            } else {
+                for (note in notes)
+                    if (FlxG.mouse.overlaps(note))
+                        notes.remove(note);
+            }
+        }
     }
 
     function addNote()
@@ -97,6 +130,10 @@ class ChartGrid extends ScriptSpriteGroup
         note.x = pointer.x;
         note.y = pointer.y;
 
+        note.parent = super;
+
         notes.add(note);
+
+        longNoteInput = note;
     }
 }

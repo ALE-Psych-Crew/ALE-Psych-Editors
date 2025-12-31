@@ -18,17 +18,26 @@ var music(get, never):FlxSound;
 function get_music(val:String)
     return FlxG.sound.music;
 
+var lastBPM(default, set):Float;
+function set_lastBPM(val:Float):Float
+{
+    lastBPM = val;
+
+    Conductor.bpm = lastBPM;
+
+    return lastBPM;
+}
+
 function postCreate()
 {
     FlxG.sound.playMusic(Paths.voices('songs/stress'));
 
     music.pause();
 
-    var songData = PlayStateUtil.loadPlayStateSong('stress', 'hard').json;
+    PlayState.SONG = PlayStateUtil.loadPlayStateSong('stress', 'hard').json;
 
-    Conductor.mapBPMChanges(songData);
-
-    Conductor.bpm = songData.bpm ?? 100;
+    Conductor.mapBPMChanges(PlayState.SONG);
+    Conductor.bpm = PlayState.SONG.bpm ?? 100;
 
     grids = new FlxTypedGroup<ChartGrid>();
     add(grids);
@@ -50,11 +59,24 @@ function get_musicY():Float
 var MUSIC_CHANGE(get, never):Float;
 function get_MUSIC_CHANGE():Float
 {
-    return 50 * (FlxG.keys.pressed.SHIFT ? 2 : 1);
+    return 30 * (FlxG.keys.pressed.SHIFT ? 2 : 1);
+}
+
+var CURRENT_SECTION(get, never):SwagSection;
+function get_CURRENT_SECTION():SwagSection
+{
+    return PlayState.SONG.notes[Conductor.curSection];
 }
 
 function updateMusic()
 {
+    /*
+    if (CURRENT_SECTION.changeBPM != null)
+        if (CURRENT_SECTION.changeBPM)
+            if (CURRENT_SECTION.bpm != lastBPM)
+                lastBPM = CURRENT_SECTION.bpm;
+    */
+
     if (FlxG.keys.justPressed.SPACE)
         if (music.playing)
             music.pause();
@@ -69,12 +91,10 @@ function updateMusic()
         music.time = FlxMath.bound(music.time + MUSIC_CHANGE * (Controls.UI_UP ? -1 : 1), 0, music.length);
     
     if (Controls.MOUSE_WHEEL)
-        music.time = FlxMath.bound(music.time + Conductor.stepCrochet * (Controls.MOUSE_WHEEL_UP ? -1 : 1), 0, music.length);
+        music.time = Math.floor(FlxMath.bound(music.time + Conductor.stepCrochet * (Controls.MOUSE_WHEEL_UP ? -1 : 1), 0, music.length) / Conductor.stepCrochet) * Conductor.stepCrochet;
 
     camGame.scroll.y = -LINE_POS + musicY;
 }
-
-
 
 function onHotReloadingConfig()
 {
