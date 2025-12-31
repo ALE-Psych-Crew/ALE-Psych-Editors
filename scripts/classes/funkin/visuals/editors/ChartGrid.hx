@@ -10,6 +10,8 @@ import ale.ui.ALEMouseSprite;
 
 import flixel.math.FlxPoint;
 
+import funkin.visuals.editors.ChartNote;
+
 class ChartGrid extends ScriptSpriteGroup
 {
     final NOTE_SIZE:Int;
@@ -20,9 +22,13 @@ class ChartGrid extends ScriptSpriteGroup
 
     var pointer:FlxSprite;
 
-    public function new(noteSize:Int, strums:Int, length:Int, linePos:Int)
+    var animations:Array<String> = [];
+
+    public function new(noteSize:Int, strums:Int, length:Int, linePos:Int, ?anims:Array<String>)
     {
         super();
+
+        animations = anims ?? ['purple0', 'blue0', 'green0', 'red0'];
 
         NOTE_SIZE = noteSize;
 
@@ -78,5 +84,19 @@ class ChartGrid extends ScriptSpriteGroup
 
         pointer.x = x + Math.floor(mousePos.x / NOTE_SIZE) * NOTE_SIZE;
         pointer.y = y + Math.floor(mousePos.y / NOTE_SIZE) * NOTE_SIZE;
+
+        if (Controls.MOUSE_P)
+            addNote();
+    }
+
+    function addNote()
+    {
+        var noteData:Int = Math.floor((pointer.x - x) / NOTE_SIZE);
+
+        var note:ChartNote = new ChartNote(noteData, NOTE_SIZE, animations[noteData]);
+        note.x = pointer.x;
+        note.y = pointer.y;
+
+        notes.add(note);
     }
 }

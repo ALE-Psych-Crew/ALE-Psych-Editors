@@ -26,6 +26,8 @@ function postCreate()
 
     var songData = PlayStateUtil.loadPlayStateSong('stress', 'hard').json;
 
+    Conductor.mapBPMChanges(songData);
+
     Conductor.bpm = songData.bpm ?? 100;
 
     grids = new FlxTypedGroup<ChartGrid>();
