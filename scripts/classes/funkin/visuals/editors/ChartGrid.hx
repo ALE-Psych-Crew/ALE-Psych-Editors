@@ -22,21 +22,46 @@ class ChartGrid extends ScriptSpriteGroup
 
     var pointer:FlxSprite;
 
-    var animations:Array<String> = [];
+    public var animations:Array<String> = [];
 
     var notePool:Array<Note> = [];
 
-    public var jsonNotes:Array<Array<Int>> = [];
+    public final strums:Array<ChartStrumConfig>;
 
-    public function new(noteSize:Int, strums:Int, length:Int, linePos:Int, ?anims:Array<String>)
+    public var sections:Array<Array<JSONNote>> = [];
+
+    public final textures:String = [];
+
+    public final rgbShader:Bool = [];
+
+    public function new(noteSize:Int, length:Int, linePos:Int, ?strs:Array<ChartStrumConfig>, ?sprites:Array<String>)
     {
         super();
 
-        animations = anims ?? ['purple0', 'blue0', 'green0', 'red0'];
+        strums = strs ?? [
+            {
+                animation: "purple0",
+                shader: [0xFFC24B99, 0xFFFFFFFF, 0xFF3C1F56]
+            },
+            {
+                animation: "blue0",
+                shader: [0xFF00FFFF, 0xFFFFFFFF, 0xFF1542B7]
+            },
+            {
+                animation: "green0",
+                shader: [0xFF12FA05, 0xFFFFFFFF, 0xFF0A4447]
+            },
+            {
+                animation: "red0",
+                shader: [0xFFF9393F, 0xFFFFFFFF, 0xFF651038]
+            }
+        ];
+
+        textures = sprites ?? ['NOTE_assets'];
 
         NOTE_SIZE = noteSize;
 
-        background = new ALEMouseSprite(0, 0, FlxGridOverlay.createGrid(NOTE_SIZE, NOTE_SIZE, NOTE_SIZE * strums, NOTE_SIZE * length, true, ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -75), ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -50)));
+        background = new ALEMouseSprite(0, 0, FlxGridOverlay.createGrid(NOTE_SIZE, NOTE_SIZE, NOTE_SIZE * strums.length, NOTE_SIZE * length, true, ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -75), ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -50)));
         add(background);
         background.onOverlapChange = (isOver) -> { pointer.exists = isOver; };
 
@@ -86,7 +111,11 @@ class ChartGrid extends ScriptSpriteGroup
         if (longNoteInput != null)
         {
             if (pointer.y >= longNoteInput.y)
+            {
                 longNoteInput.length = (pointer.y - longNoteInput.y) / NOTE_SIZE * Conductor.stepCrochet;
+                
+                sections[Conductor.curSection][longNoteInput.index].length = longNoteInput.length;
+            }
         }
 
         if (input != null && input)
@@ -109,7 +138,7 @@ class ChartGrid extends ScriptSpriteGroup
             for (note in notes)
             {
                 if (!note.alive)
-                    return;
+                    continue;
 
                 if (FlxG.mouse.overlaps(note.texture))
                 {
@@ -126,7 +155,7 @@ class ChartGrid extends ScriptSpriteGroup
             } else {
                 if (overlapedNote != null)
                 {
-                    jsonNotes[Conductor.curSection][overlapedNote.index] = null;
+                    sections[Conductor.curSection][overlapedNote.index] = null;
 
                     notes.remove(overlapedNote);
 
@@ -140,41 +169,56 @@ class ChartGrid extends ScriptSpriteGroup
         }
     }
 
-    function addNote(?customData:Int, ?customTime:Float, ?length:Float)
+    function addNote(?customData:Int, ?customTime:Float, ?length:Float, ?type:String)
     {
-        jsonNotes[Conductor.curSection] ??= [];
+        sections[Conductor.curSection] ??= [];
 
         final data:Int = customData ?? Math.floor((pointer.x - x) / NOTE_SIZE);
 
+        final config:ChartStrumConfig = strums[data];
+
         final time:Float = customTime ?? pointer.y - y <= 0 ? 0 : (pointer.y - y) / (background.height / 2) * (background.height / 2 / NOTE_SIZE) * Conductor.stepCrochet;
 
-        final anim:String = animations[data];
+        final anim:String = config.animation;
 
         final length:Float = length ?? 0;
+
+        final type:String = type ?? '';
 
         var note:ChartNote;
         
         if (notePool.length <= 0)
-        {
-            note = new ChartNote(data, NOTE_SIZE, anim, time, length);
-        } else {
+            note = new ChartNote(textures, NOTE_SIZE);
+        else
             note = notePool.pop();
 
-            note.reset(anim, data, time, length);
-        }
+        note.reset(anim, data, time, length, type, config.shader);
 
-        note.index = jsonNotes[Conductor.curSection].length;
+        note.index = sections[Conductor.curSection].length;
 
-        jsonNotes[Conductor.curSection].push(
-            [
-                time,
-                data,
-                length
-            ]
+        sections[Conductor.curSection].push(
+            {
+                time: time,
+                data: data,
+                length: length,
+                type: type
+            }
         );
 
         notes.add(note);
 
         longNoteInput = note;
+    }
+
+    override function destroy()
+    {
+        for (note in notePool)
+        {
+            note.destroy();
+
+            note = null;
+        }
+
+        super.destroy();
     }
 }

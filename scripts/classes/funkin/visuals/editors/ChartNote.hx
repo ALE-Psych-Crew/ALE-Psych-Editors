@@ -26,6 +26,8 @@ class ChartNote extends ScriptSpriteGroup
 
         tail.scale.y = NOTE_SIZE * (value / Conductor.stepCrochet);
         tail.updateHitbox();
+        tail.x = x + texture.width / 2 - tail.width / 2;
+        tail.y = y + texture.height / 2;
 
         return length;
     }
@@ -34,38 +36,31 @@ class ChartNote extends ScriptSpriteGroup
 
     public var data:Int;
 
-    public function new(data:Int, noteSize:Int, anim:String, ?time:Float, ?length:Float)
+    public var type:String = '';
+
+    public function new(?sprites:Array<String>, noteSize:Int)
     {
         super();
 
         NOTE_SIZE = noteSize;
 
         texture = new FlxSprite();
-        texture.frames = Paths.getSparrowAtlas('noteSkins/NOTE_assets');
-        texture.animation.addByPrefix('idle', anim, 1, false);
-        texture.animation.play('idle');
-        texture.setGraphicSize(NOTE_SIZE, NOTE_SIZE);
-        texture.updateHitbox();
+        texture.frames = Paths.getMultiAtlas([for (spr in sprites) 'noteSkins/' + spr]);
         
 		textureShader = new RGBShaderReference(texture, new RGBPalette());
-        textureShader.r = FlxColor.fromRGB(25, 25, 25);
-        textureShader.g = ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, 50);
-        textureShader.b = ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, 25);
 
-        tail = new FlxSprite().makeGraphic(Math.floor(NOTE_SIZE / 5), 1, ALEUIUtils.COLOR);
-        tail.x = texture.width / 2 - tail.width / 2;
-        tail.y = texture.height / 2;
+        tail = new FlxSprite().makeGraphic(Math.floor(NOTE_SIZE / 5), 1, FlxColor.GRAY);
 
         add(tail);
         add(texture);
-
-        reset(anim, data, time ?? 0, length ?? 0);
     }
 
-    public function reset(anim:String, data:Int, time:Float, length:Float)
+    public function reset(anim:String, data:Int, time:Float, length:Float, type:String, ?shader:Array<Int>)
     {
-        texture.animation.addByPrefix('idle', anim, 1, false);
-        texture.animation.play('idle');
+        texture.animation.addByPrefix(anim, anim, 1, false);
+        texture.animation.play(anim);
+        texture.setGraphicSize(NOTE_SIZE, NOTE_SIZE);
+        texture.updateHitbox();
         
         this.time = time;
         this.length = length;
@@ -74,6 +69,21 @@ class ChartNote extends ScriptSpriteGroup
 
         this.x = data * NOTE_SIZE;
         this.y = time / Conductor.stepCrochet * NOTE_SIZE;
+
+        this.type = type;
+
+        tail.color = FlxColor.GRAY;
+
+        textureShader.enabled = shader != null;
+
+        if (textureShader.enabled)
+        {
+            textureShader.r = shader[0];
+            textureShader.g = shader[1];
+            textureShader.b = shader[2];
+
+            tail.color = textureShader.r;
+        }
     }
 
     override function update(elapsed:Float)

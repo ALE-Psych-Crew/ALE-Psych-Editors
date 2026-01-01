@@ -54,7 +54,47 @@ function postCreate()
     grids = new FlxTypedGroup<ChartGrid>();
     add(grids);
 
-    addGrid();
+    for (i in 0...2)
+        addGrid();
+
+    addGrid([
+        {
+            animation: 'A0',
+            shader: [0xFFC24B99, 0xFFFFFFFF, 0xFF3C1F56]
+        },
+        {
+            animation: 'B0',
+            shader: [0xFF00FFFF, 0xFFFFFFFF, 0xFF1542B7]
+        },
+        {
+            animation: 'C0',
+            shader: [0xFF12FA05, 0xFFFFFFFF, 0xFF0A4447]
+        },
+        {
+            animation: 'D0',
+            shader: [0xFFF9393F, 0xFFFFFFFF, 0xFF651038]
+        },
+        {
+            animation: 'E0',
+            shader: [0xFF999999, 0xFFFFFFFF, 0xFF201E31]
+        },
+        {
+            animation: 'F0',
+            shader: [0xFFFFFF00, 0xFFFFFFFF, 0xFF993300]
+        },
+        {
+            animation: 'G0',
+            shader: [0xFF8b4aff, 0xFFFFFFFF, 0xFF3b177d]
+        },
+        {
+            animation: 'H0',
+            shader: [0xFFFF0000, 0xFFFFFFFF, 0xFF660000]
+        },
+        {
+            animation: 'I0',
+            shader: [0xFF0033ff, 0xFFFFFFFF, 0xFF000066]
+        }
+    ], ['NOTE_multi']);
 
     var button = new ale.ui.ALEButton(100, 100, 'Create Grid');
     button.releaseCallback = addGrid;
@@ -71,9 +111,14 @@ var camData:{pos:Float, zoom:Float} = {
     zoom: 1
 };
 
-function addGrid()
+var chart:ALEChart = {
+    strumLines: [],
+    sections: []
+};
+
+function addGrid(?config:Array<ChartStrumConfig>, ?sprites:Array<String>)
 {
-    var newGrid:ChartGrid = new ChartGrid(NOTE_SIZE, 4, STEPS * 2, LINE_POS);
+    var newGrid:ChartGrid = new ChartGrid(NOTE_SIZE, STEPS * 2, LINE_POS, config, sprites);
 
     FlxTween.tween(newGrid, {x: gridOffset}, 0.5, {ease: FlxEase.cubeOut});
 
@@ -89,6 +134,9 @@ function onUpdate(elapsed:Float)
     updateMusic();
 
     updateCamera();
+
+    if (Controls.ACCEPT)
+        saveChart();
 }
 
 var musicY(get, never):Float;
@@ -153,6 +201,46 @@ function updateCamera()
     bg.scale.x = bg.scale.y = CoolUtil.fpsLerp(bg.scale.x, 1 / camData.zoom, 0.25);
 }
 
+function saveChart()
+{
+    chart.strumLines = [];
+
+    for (gridIndex => grid in grids)
+    {
+        chart.strumLines.push({
+            strums: grid.strums,
+            sprites: grid.textures
+        });
+
+        for (sectionIndex => section in grid.sections)
+        {
+            chart.sections[sectionIndex] ??= {
+                notes: []
+            };
+
+            chart.sections[sectionIndex].notes = [];
+
+            for (note in section)
+            {
+                if (note == null)
+                    continue;
+
+                chart.sections[sectionIndex].notes.push([
+                    note.time,
+                    note.data,
+                    note.length,
+                    note.type,
+                    gridIndex
+                ]);
+            }
+        }
+    }
+
+    File.saveContent('OSO_CHART.json', Json.stringify(chart));
+}
+
+// ----------- ADRIANA SALTE -----------
+
 function onHotReloadingConfig()
 {
     debugTrace('Init State');
@@ -161,7 +249,7 @@ function onHotReloadingConfig()
         addHotReloadingFile('scripts/classes/funkin/visuals/editors/' + file + '.hx');
 }
 
-if (true)
+if (false)
 {
     final window:Window = Application.current.window;
 
