@@ -24,6 +24,8 @@ class ChartGrid extends ScriptSpriteGroup
 
     var animations:Array<String> = [];
 
+    var notePool:Array<Note> = [];
+
     public var jsonNotes:Array<Array<Int>> = [];
 
     public function new(noteSize:Int, strums:Int, length:Int, linePos:Int, ?anims:Array<String>)
@@ -127,6 +129,8 @@ class ChartGrid extends ScriptSpriteGroup
                     jsonNotes[Conductor.curSection][overlapedNote.index] = null;
 
                     notes.remove(overlapedNote);
+
+                    notePool.push(overlapedNote);
                 }
             }
             
@@ -140,25 +144,37 @@ class ChartGrid extends ScriptSpriteGroup
     {
         jsonNotes[Conductor.curSection] ??= [];
 
-        var noteData:Int = Math.floor((pointer.x - x) / NOTE_SIZE);
+        final data:Int = customData ?? Math.floor((pointer.x - x) / NOTE_SIZE);
 
-        var noteTime:Float = (pointer.y - y) / (background.height / 2) * (background.height / 2 / NOTE_SIZE) * Conductor.stepCrochet;
+        final time:Float = customTime ?? pointer.y - y <= 0 ? 0 : (pointer.y - y) / (background.height / 2) * (background.height / 2 / NOTE_SIZE) * Conductor.stepCrochet;
 
-        var note:ChartNote = new ChartNote(customData ?? noteData, NOTE_SIZE, animations[noteData], customTime ?? (pointer.y - y <= 0 ? 0 : noteTime), length);
+        final anim:String = animations[data];
+
+        final length:Float = length ?? 0;
+
+        var note:ChartNote;
+        
+        if (notePool.length <= 0)
+        {
+            note = new ChartNote(data, NOTE_SIZE, anim, time, length);
+        } else {
+            note = notePool.pop();
+
+            note.reset(anim, data, time, length);
+        }
+
         note.index = jsonNotes[Conductor.curSection].length;
 
         jsonNotes[Conductor.curSection].push(
             [
-                note.time,
-                note.data,
-                note.length
+                time,
+                data,
+                length
             ]
         );
 
         notes.add(note);
 
         longNoteInput = note;
-
-        debugTrace(jsonNotes);
     }
 }
