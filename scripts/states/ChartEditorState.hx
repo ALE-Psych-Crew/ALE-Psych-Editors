@@ -4,13 +4,18 @@ import utils.cool.PlayStateUtil;
 
 import funkin.visuals.editors.ChartGrid;
 
+import ale.ui.ALEUIUtils;
+
 import flixel.math.FlxPoint;
+import flixel.util.FlxGradient;
 
 final NOTE_SIZE:Int = 50;
 
 final STEPS:Int = 16;
 
-final LINE_POS:Int = 300;
+final LINE_POS:Int = 200;
+
+var bg:FlxSprite;
 
 var grids:FlxTypedGroup<ChartGrid>;
 
@@ -34,6 +39,13 @@ function postCreate()
 
     music.pause();
 
+    music.time = 0;
+
+    bg = FlxGradient.createGradientFlxSprite(FlxG.width, FlxG.height, [FlxColor.BLACK, ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -50)]);
+    bg.scrollFactor.set();
+
+    add(bg);
+
     PlayState.SONG = PlayStateUtil.loadPlayStateSong('stress', 'hard').json;
 
     Conductor.mapBPMChanges(PlayState.SONG);
@@ -42,12 +54,41 @@ function postCreate()
     grids = new FlxTypedGroup<ChartGrid>();
     add(grids);
 
-    grids.add(new ChartGrid(NOTE_SIZE, 4, STEPS * 2, LINE_POS));
+    addGrid();
+
+    var button = new ale.ui.ALEButton(100, 100, 'Create Grid');
+    button.releaseCallback = addGrid;
+    button.cameras = [camHUD];
+    add(button);
+}
+
+final GRID_SPACE:Int = 25;
+
+var gridOffset:Float = 0;
+
+var camData:{pos:Float, zoom:Float} = {
+    pos: 0,
+    zoom: 1
+};
+
+function addGrid()
+{
+    var newGrid:ChartGrid = new ChartGrid(NOTE_SIZE, 4, STEPS * 2, LINE_POS);
+
+    FlxTween.tween(newGrid, {x: gridOffset}, 0.5, {ease: FlxEase.cubeOut});
+
+    gridOffset += newGrid.background.width + GRID_SPACE;
+
+    camData.pos = Math.max(0, gridOffset - GRID_SPACE) / 2 - FlxG.width / 2;
+
+    grids.add(newGrid);
 }
 
 function onUpdate(elapsed:Float)
 {
     updateMusic();
+
+    updateCamera();
 }
 
 var musicY(get, never):Float;
@@ -77,23 +118,39 @@ function updateMusic()
                 lastBPM = CURRENT_SECTION.bpm;
     */
 
-    if (FlxG.keys.justPressed.SPACE)
+    if (Controls.UI_UP || Controls.UI_DOWN || ((!Controls.SHIFT && !Conductor.CONTROL) && Controls.MOUSE_WHEEL))
+    {
+        if (Controls.UI_UP || Controls.UI_DOWN)
+            music.time = FlxMath.bound(music.time + MUSIC_CHANGE * (Controls.UI_UP ? -1 : 1), 0, music.length);
+
+        if (!Controls.SHIFT && !Controls.CONTROL)
+            if (Controls.MOUSE_WHEEL)
+                music.time = Math.floor(FlxMath.bound(music.time + Conductor.stepCrochet * (Controls.MOUSE_WHEEL_UP ? -1 : 1), 0, music.length) / Conductor.stepCrochet) * Conductor.stepCrochet;
+
+        if (music.playing)
+            music.pause();
+    } else if (FlxG.keys.justPressed.SPACE) {
         if (music.playing)
             music.pause();
         else
             music.resume();
-
-    if (Controls.UI_UP_P || Controls.UI_DOWN_P || Controls.MOUSE_WHEEL)
-        if (music.playing)
-            music.pause();
-
-    if (Controls.UI_UP || Controls.UI_DOWN)
-        music.time = FlxMath.bound(music.time + MUSIC_CHANGE * (Controls.UI_UP ? -1 : 1), 0, music.length);
+    }
     
-    if (Controls.MOUSE_WHEEL)
-        music.time = Math.floor(FlxMath.bound(music.time + Conductor.stepCrochet * (Controls.MOUSE_WHEEL_UP ? -1 : 1), 0, music.length) / Conductor.stepCrochet) * Conductor.stepCrochet;
-
     camGame.scroll.y = -LINE_POS + musicY;
+}
+
+function updateCamera()
+{
+    if (Controls.MOUSE_WHEEL)
+        if (Controls.SHIFT)
+            camData.pos -= FlxG.mouse.wheel * 50;
+        else if (Controls.CONTROL)
+            camData.zoom = FlxMath.bound(camData.zoom + FlxG.mouse.wheel * camData.zoom * 0.1, 0.25, 2);
+
+    camGame.scroll.x = CoolUtil.fpsLerp(camGame.scroll.x, camData.pos, 0.25);
+    camGame.zoom = CoolUtil.fpsLerp(camGame.zoom, camData.zoom, 0.25);
+
+    bg.scale.x = bg.scale.y = CoolUtil.fpsLerp(bg.scale.x, 1 / camData.zoom, 0.25);
 }
 
 function onHotReloadingConfig()

@@ -30,7 +30,9 @@ class ChartNote extends ScriptSpriteGroup
         return length;
     }
 
-    public var parent:FlxSpriteGroup;
+    public var index:Int;
+
+    public var data:Int;
 
     public function new(data:Int, noteSize:Int, anim:String, ?time:Float, ?length:Float)
     {
@@ -47,8 +49,8 @@ class ChartNote extends ScriptSpriteGroup
         
 		textureShader = new RGBShaderReference(texture, new RGBPalette());
         textureShader.r = FlxColor.fromRGB(25, 25, 25);
-        textureShader.g = ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, 25);
-        textureShader.b = ALEUIUtils.COLOR;
+        textureShader.g = ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, 50);
+        textureShader.b = ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, 25);
 
         tail = new FlxSprite().makeGraphic(Math.floor(NOTE_SIZE / 5), 1, ALEUIUtils.COLOR);
         tail.x = texture.width / 2 - tail.width / 2;
@@ -68,13 +70,17 @@ class ChartNote extends ScriptSpriteGroup
         this.time = time;
         this.length = length;
 
+        this.data = data;
+
         this.x = data * NOTE_SIZE;
+        this.y = time / Conductor.stepCrochet * NOTE_SIZE;
     }
 
     override function update(elapsed:Float)
     {
         super.update(elapsed);
 
-        alpha = Conductor.songPosition <= time ? 1 : 0.5;
+        texture.alpha = Conductor.songPosition <= time ? 1 : 0.5;
+        tail.alpha = texture.alpha * 0.75;
     }
 }
