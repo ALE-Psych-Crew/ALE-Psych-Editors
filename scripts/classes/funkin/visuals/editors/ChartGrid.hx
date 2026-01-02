@@ -18,21 +18,19 @@ class ChartGrid extends ScriptSpriteGroup
 
     public var background:FlxSprite;
 
-    var notes:FlxTypedGroup<ChartNote>;
+    var notes:FlxTypedSpriteGroup<ChartNote>;
 
     var pointer:FlxSprite;
 
     public var animations:Array<String> = [];
 
-    var notePool:Array<Note> = [];
+    var notePool:Array<ChartNote> = [];
 
     public final strums:Array<ChartStrumConfig>;
 
     public var sections:Array<Array<JSONNote>> = [];
 
-    public final textures:String = [];
-
-    public final rgbShader:Bool = [];
+    public final textures:Array<String> = [];
 
     public function new(noteSize:Int, length:Int, linePos:Int, ?strs:Array<ChartStrumConfig>, ?sprites:Array<String>)
     {
@@ -83,9 +81,18 @@ class ChartGrid extends ScriptSpriteGroup
         add(middleMask);
     }
 
+    var _lastSec:Int = -1;
+
     override function update(elapsed:Float)
     {
         super.update(elapsed);
+
+        if (_lastSec != Conductor.curSection)
+        {
+            _lastSec = Conductor.curSection;
+
+            updateSection(_lastSec);
+        }
 
         updatePointer();
     }
@@ -169,7 +176,7 @@ class ChartGrid extends ScriptSpriteGroup
         }
     }
 
-    function addNote(?customData:Int, ?customTime:Float, ?length:Float, ?type:String)
+    function addNote(?customData:Int, ?customTime:Float, ?length:Float, ?type:String, ?push:Bool)
     {
         sections[Conductor.curSection] ??= [];
 
@@ -177,7 +184,7 @@ class ChartGrid extends ScriptSpriteGroup
 
         final config:ChartStrumConfig = strums[data];
 
-        final time:Float = customTime ?? pointer.y - y <= 0 ? 0 : (pointer.y - y) / (background.height / 2) * (background.height / 2 / NOTE_SIZE) * Conductor.stepCrochet;
+        final time:Float = customTime ?? (pointer.y - y <= 0 ? 0 : (pointer.y - y) / (background.height / 2) * (background.height / 2 / NOTE_SIZE) * Conductor.stepCrochet);
 
         final anim:String = config.animation;
 
@@ -196,18 +203,41 @@ class ChartGrid extends ScriptSpriteGroup
 
         note.index = sections[Conductor.curSection].length;
 
-        sections[Conductor.curSection].push(
-            {
-                time: time,
-                data: data,
-                length: length,
-                type: type
-            }
-        );
-
         notes.add(note);
 
-        longNoteInput = note;
+        if (push ?? true)
+        {
+            sections[Conductor.curSection].push(
+                {
+                    time: time,
+                    data: data,
+                    length: length,
+                    type: type
+                }
+            );
+
+            longNoteInput = note;
+        }
+    }
+
+    function updateSection(curSection:Int)
+    {
+        longNoteInput = null;
+
+        for (note in notes)
+        {
+            notePool.push(note);
+
+            notes.remove(note);
+        }
+
+        var jsonSection:Array<JSONNote> = sections[curSection];
+
+        jsonSection ??= [];
+
+        for (note in jsonSection)
+            if (note != null)
+                addNote(note.data, note.time, note.length, note.type, false);
     }
 
     override function destroy()

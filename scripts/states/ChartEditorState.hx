@@ -157,6 +157,8 @@ function get_CURRENT_SECTION():SwagSection
     return PlayState.SONG.notes[Conductor.curSection];
 }
 
+var _lastSec:Int = -1;
+
 function updateMusic()
 {
     /*
@@ -185,6 +187,8 @@ function updateMusic()
     }
     
     camGame.scroll.y = -LINE_POS + musicY;
+
+    Conductor.songPosition = music.time;
 }
 
 function updateCamera()
@@ -249,7 +253,7 @@ function onHotReloadingConfig()
         addHotReloadingFile('scripts/classes/funkin/visuals/editors/' + file + '.hx');
 }
 
-if (false)
+if (true)
 {
     final window:Window = Application.current.window;
 
