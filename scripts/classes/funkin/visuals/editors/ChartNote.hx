@@ -78,9 +78,9 @@ class ChartNote extends ScriptSpriteGroup
 
         if (textureShader.enabled)
         {
-            textureShader.r = shader[0];
-            textureShader.g = shader[1];
-            textureShader.b = shader[2];
+            textureShader.r = CoolUtil.colorFromString(shader[0]);
+            textureShader.g = CoolUtil.colorFromString(shader[1]);
+            textureShader.b = CoolUtil.colorFromString(shader[2]);
 
             tail.color = textureShader.r;
         }

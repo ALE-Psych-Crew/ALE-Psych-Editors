@@ -12,6 +12,10 @@ import flixel.math.FlxPoint;
 
 import funkin.visuals.editors.ChartNote;
 
+import utils.ALEFormatter;
+
+//import core.structures.ALESongStrumLine;
+
 class ChartGrid extends ScriptSpriteGroup
 {
     final NOTE_SIZE:Int;
@@ -26,40 +30,23 @@ class ChartGrid extends ScriptSpriteGroup
 
     var notePool:Array<ChartNote> = [];
 
-    public final strums:Array<ChartStrumConfig>;
+    public final configID:String;
+
+    public final config:ALESongStrumLine;
 
     public var sections:Array<Array<JSONNote>> = [];
 
-    public final textures:Array<String> = [];
-
-    public function new(noteSize:Int, length:Int, linePos:Int, ?strs:Array<ChartStrumConfig>, ?sprites:Array<String>)
+    public function new(noteSize:Int, length:Int, linePos:Int, ?configFile:String)
     {
         super();
 
-        strums = strs ?? [
-            {
-                animation: "purple0",
-                shader: [0xFFC24B99, 0xFFFFFFFF, 0xFF3C1F56]
-            },
-            {
-                animation: "blue0",
-                shader: [0xFF00FFFF, 0xFFFFFFFF, 0xFF1542B7]
-            },
-            {
-                animation: "green0",
-                shader: [0xFF12FA05, 0xFFFFFFFF, 0xFF0A4447]
-            },
-            {
-                animation: "red0",
-                shader: [0xFFF9393F, 0xFFFFFFFF, 0xFF651038]
-            }
-        ];
+        configID = configFile;
 
-        textures = sprites ?? ['NOTE_assets'];
+        config = ALEFormatter.getStrumLine(configID);
 
         NOTE_SIZE = noteSize;
 
-        background = new ALEMouseSprite(0, 0, FlxGridOverlay.createGrid(NOTE_SIZE, NOTE_SIZE, NOTE_SIZE * strums.length, NOTE_SIZE * length, true, ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -75), ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -50)));
+        background = new ALEMouseSprite(0, 0, FlxGridOverlay.createGrid(NOTE_SIZE, NOTE_SIZE, NOTE_SIZE * config.strums.length, NOTE_SIZE * length, true, ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -75), ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -50)));
         add(background);
         background.onOverlapChange = (isOver) -> { pointer.exists = isOver; };
 
@@ -182,11 +169,11 @@ class ChartGrid extends ScriptSpriteGroup
 
         final data:Int = customData ?? Math.floor((pointer.x - x) / NOTE_SIZE);
 
-        final config:ChartStrumConfig = strums[data];
+        final strumConfig:ALESongStrum = config.strums[data];
 
         final time:Float = customTime ?? (pointer.y - y <= 0 ? 0 : (pointer.y - y) / (background.height / 2) * (background.height / 2 / NOTE_SIZE) * Conductor.stepCrochet);
 
-        final anim:String = config.animation;
+        final anim:String = strumConfig.note;
 
         final length:Float = length ?? 0;
 
@@ -195,11 +182,11 @@ class ChartGrid extends ScriptSpriteGroup
         var note:ChartNote;
         
         if (notePool.length <= 0)
-            note = new ChartNote(textures, NOTE_SIZE);
+            note = new ChartNote(config.textures, NOTE_SIZE);
         else
             note = notePool.pop();
 
-        note.reset(anim, data, time, length, type, config.shader);
+        note.reset(anim, data, time, length, type, strumConfig.shader);
 
         note.index = sections[Conductor.curSection].length;
 
