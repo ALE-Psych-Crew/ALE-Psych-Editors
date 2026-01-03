@@ -80,7 +80,7 @@ var chart:ALEChart = {
 
 function addGrid(?config:String)
 {
-    var newGrid:ChartGrid = new ChartGrid(NOTE_SIZE, STEPS * 2, LINE_POS, config ?? 'default');
+    var newGrid:ChartGrid = new ChartGrid(NOTE_SIZE, STEPS, LINE_POS, config ?? 'default');
 
     FlxTween.tween(newGrid, {x: gridOffset}, 0.5, {ease: FlxEase.cubeOut});
 

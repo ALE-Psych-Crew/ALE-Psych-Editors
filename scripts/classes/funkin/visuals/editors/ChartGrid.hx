@@ -48,7 +48,12 @@ class ChartGrid extends ScriptSpriteGroup
 
         background = new ALEMouseSprite(0, 0, FlxGridOverlay.createGrid(NOTE_SIZE, NOTE_SIZE, NOTE_SIZE * config.strums.length, NOTE_SIZE * length, true, ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -75), ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -50)));
         add(background);
-        background.onOverlapChange = (isOver) -> { pointer.exists = isOver; };
+        background.onOverlapChange = (isOver) -> {
+            pointer.exists = isOver;
+            
+            if (longNote != null)
+                longNote = null;
+        };
 
         notes = new FlxTypedSpriteGroup<ChartNote>();
         add(notes);
@@ -62,7 +67,7 @@ class ChartGrid extends ScriptSpriteGroup
         add(positionLine);
         positionLine.scrollFactor.set(1);
 
-        var middleMask:FlxSprite = new FlxSprite(0, background.height / 2).makeGraphic(Math.floor(background.width), Math.floor(background.height / 2));
+        var middleMask:FlxSprite = new FlxSprite(0, background.height).makeGraphic(Math.floor(background.width), Math.floor(background.height));
         middleMask.color = FlxColor.BLACK;
         middleMask.alpha = 0.5;
         add(middleMask);
@@ -81,7 +86,80 @@ class ChartGrid extends ScriptSpriteGroup
             updateSection(_lastSec);
         }
 
-        updatePointer();
+        if (pointer.exists)
+        {
+            pointer.x = x + Math.floor((mousePos.x - x) / NOTE_SIZE) * NOTE_SIZE;
+            pointer.y = y + Math.floor((mousePos.y - y) / NOTE_SIZE) * NOTE_SIZE;
+
+            pointer.color = Controls.MOUSE_P || FlxG.mouse.justPressedRight ? FlxColor.GRAY : FlxColor.WHITE;
+
+            if (longNote != null)
+            {
+                if (pointer.y >= longNote.y)
+                {
+                    longNote.length = (pointer.y - longNote.y) / NOTE_SIZE * Conductor.stepCrochet;
+                    
+                    sections[Conductor.curSection][longNote.index].length = longNote.length;
+                }
+            }
+
+            if (Controls.MOUSE_P || FlxG.mouse.justPressedRight)
+            {
+                var overlapedNote:ChartNote = null;
+                
+                for (note in notes)
+                {
+                    if (!note.alive)
+                        continue;
+
+                    if (FlxG.mouse.overlaps(note.texture))
+                    {
+                        overlapedNote = note;
+
+                        break;
+                    }
+                }
+
+                if (Controls.MOUSE_P)
+                {
+                    if (overlapedNote == null)
+                        addNote();
+                    else
+                        removeNote(overlapedNote);
+                } else {
+                    if (overlapedNote != null)
+                        if (overlapedNote.selected)
+                            deSelectNote(overlapedNote);
+                        else
+                            selectNote(overlapedNote);
+                }
+            }
+        }
+        
+        if (Controls.MOUSE_P)
+            for (note in selected)
+                if (note != null)
+                    deSelectNote(note);
+
+        if (Controls.MOUSE_R)
+        {
+            if (longNote != null)
+            {
+                selectNote(longNote);
+
+                longNote = null;
+            }
+        }
+
+        if (FlxG.keys.justPressed.Q || FlxG.keys.justPressed.E)
+            for (note in selected)
+                if (note != null)
+                    note.length = Math.max(0, note.length + Conductor.stepCrochet * (FlxG.keys.justPressed.Q ? -1 : 1));
+
+        if (FlxG.keys.justPressed.DELETE)
+            for (note in selected)
+                if (note != null)
+                    removeNote(note);
     }
 
     var mousePos(get, never):FlxPoint;
@@ -90,78 +168,9 @@ class ChartGrid extends ScriptSpriteGroup
         return FlxG.mouse.getWorldPosition(cameras[0]);
     }
 
-    var input:Null<Bool> = null;
+    var selected:Array<Null<ChartNote>> = [];
 
-    var longNoteInput:Null<ChartNote> = null;
-
-    function updatePointer()
-    {
-        if (!pointer.exists)
-            return;
-
-        pointer.x = x + Math.floor((mousePos.x - x) / NOTE_SIZE) * NOTE_SIZE;
-        pointer.y = y + Math.floor((mousePos.y - y) / NOTE_SIZE) * NOTE_SIZE;
-
-        if (longNoteInput != null)
-        {
-            if (pointer.y >= longNoteInput.y)
-            {
-                longNoteInput.length = (pointer.y - longNoteInput.y) / NOTE_SIZE * Conductor.stepCrochet;
-                
-                sections[Conductor.curSection][longNoteInput.index].length = longNoteInput.length;
-            }
-        }
-
-        if (input != null && input)
-            input = null;
-
-        if ((FlxG.mouse.justPressed && !FlxG.mouse.pressedRight) || (FlxG.mouse.justPressedRight && !FlxG.mouse.pressed))
-            input = FlxG.mouse.justPressed ? true : false;
-
-        if (FlxG.mouse.justReleased || FlxG.mouse.justReleasedRight)
-        {
-            input = null;
-
-            longNoteInput = null;
-        }
-
-        if (input != null)
-        {
-            var overlapedNote:ChartNote = null;
-            
-            for (note in notes)
-            {
-                if (!note.alive)
-                    continue;
-
-                if (FlxG.mouse.overlaps(note.texture))
-                {
-                    overlapedNote = note;
-
-                    break;
-                }
-            }
-
-            if (input)
-            {
-                if (overlapedNote == null)
-                    addNote();
-            } else {
-                if (overlapedNote != null)
-                {
-                    sections[Conductor.curSection][overlapedNote.index] = null;
-
-                    notes.remove(overlapedNote);
-
-                    notePool.push(overlapedNote);
-                }
-            }
-            
-            pointer.color = input ? FlxColor.GRAY : FlxColor.RED;
-        } else {
-            pointer.color = FlxColor.WHITE;
-        }
-    }
+    var longNote:Null<ChartNote> = null;
 
     function addNote(?customData:Int, ?customTime:Float, ?length:Float, ?type:String, ?push:Bool)
     {
@@ -171,7 +180,7 @@ class ChartGrid extends ScriptSpriteGroup
 
         final strumConfig:ALESongStrum = config.strums[data];
 
-        final time:Float = customTime ?? (pointer.y - y <= 0 ? 0 : (pointer.y - y) / (background.height / 2) * (background.height / 2 / NOTE_SIZE) * Conductor.stepCrochet);
+        final time:Float = customTime ?? (pointer.y - y <= 0 ? 0 : (pointer.y - y) / background.height * (background.height / NOTE_SIZE) * Conductor.stepCrochet);
 
         final anim:String = strumConfig.note;
 
@@ -190,7 +199,8 @@ class ChartGrid extends ScriptSpriteGroup
 
         note.index = sections[Conductor.curSection].length;
 
-        notes.add(note);
+        @:privateAccess notes.preAdd(note);
+        notes.group.members.push(note);
 
         if (push ?? true)
         {
@@ -203,19 +213,51 @@ class ChartGrid extends ScriptSpriteGroup
                 }
             );
 
-            longNoteInput = note;
+            longNote = note;
         }
+    }
+
+    function removeNote(note:ChartNote)
+    {
+        if (note.selected)
+            deSelectNote(note);
+
+        sections[Conductor.curSection][note.index] = null;
+
+        notes.group.members.remove(note);
+
+        notePool.push(note);
+    }
+
+    function selectNote(note:ChartNote)
+    {
+        note.selected = true;
+
+        note.selectedIndex = selected.length;
+
+        selected.push(note);
+    }
+
+    function deSelectNote(note:ChartNote)
+    {
+        note.selected = false;
+
+        selected[note.selectedIndex] = null;
+
+        note.selectedIndex = null;
     }
 
     function updateSection(curSection:Int)
     {
-        longNoteInput = null;
+        longNote = null;
+
+        selected.resize(0);
 
         for (note in notes)
         {
             notePool.push(note);
 
-            notes.remove(note);
+            notes.members.remove(note, true);
         }
 
         var jsonSection:Array<JSONNote> = sections[curSection];

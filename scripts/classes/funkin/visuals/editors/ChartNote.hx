@@ -55,7 +55,9 @@ class ChartNote extends ScriptSpriteGroup
         add(texture);
     }
 
-    public function reset(anim:String, data:Int, time:Float, length:Float, type:String, ?shader:Array<Int>)
+    var lastShader:Null<Array<Int>>;
+
+    public function reset(anim:String, data:Int, time:Float, length:Float, type:String, ?shader:Null<Array<Int>>)
     {
         texture.animation.addByPrefix(anim, anim, 1, false);
         texture.animation.play(anim);
@@ -72,25 +74,77 @@ class ChartNote extends ScriptSpriteGroup
 
         this.type = type;
 
-        tail.color = FlxColor.GRAY;
+        lastShader = shader;
 
-        textureShader.enabled = shader != null;
+        setShader();
+
+        selected = false;
+    }
+
+    final SELECT_SHADER:Array<Int> = [
+        ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -50),
+        ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, 50),
+        ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, 25)
+    ];
+
+    function setShader()
+    {
+        tail.color = FlxColor.WHITE;
+
+        textureShader.enabled = lastShader != null;
 
         if (textureShader.enabled)
         {
-            textureShader.r = CoolUtil.colorFromString(shader[0]);
-            textureShader.g = CoolUtil.colorFromString(shader[1]);
-            textureShader.b = CoolUtil.colorFromString(shader[2]);
+            textureShader.r = CoolUtil.colorFromString(lastShader[0]);
+            textureShader.g = CoolUtil.colorFromString(lastShader[1]);
+            textureShader.b = CoolUtil.colorFromString(lastShader[2]);
 
             tail.color = textureShader.r;
         }
     }
 
+    var selectedAlpha:Float = 1;
+
+    var selectedTime:Float = 0;
+
+    public var selected(default, set):Null<Bool>;
+    function set_selected(val:Null<Bool>):Null<Bool>
+    {
+        selected = val;
+
+        if (selected)
+        {
+            selectedTime = 0;
+            
+            textureShader.r = SELECT_SHADER[0];
+            textureShader.g = SELECT_SHADER[1];
+            textureShader.b = SELECT_SHADER[2];
+
+            tail.color = textureShader.b;
+        } else {
+            selectedAlpha = 1;
+
+            setShader();
+        }
+
+        return selected;
+    }
+
+    public var selectedIndex:Null<Int>;
+
     override function update(elapsed:Float)
     {
         super.update(elapsed);
 
-        texture.alpha = Conductor.songPosition <= time ? 1 : 0.5;
+        if (selected)
+        {
+            selectedTime += elapsed * 3;
+
+            selectedAlpha = 0.75 + Math.sin(selectedTime) * 0.25;
+        }
+
+        texture.alpha = (Conductor.songPosition <= time ? 1 : 0.5) * selectedAlpha;
+
         tail.alpha = texture.alpha * 0.75;
     }
 }
