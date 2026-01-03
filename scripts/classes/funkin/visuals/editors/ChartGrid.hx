@@ -20,6 +20,10 @@ class ChartGrid extends ScriptSpriteGroup
 {
     final NOTE_SIZE:Int;
 
+    final BEATS_PER_SECTION:Int;
+    final STEPS_PER_BEAT:Int;
+    final STEPS:Int;
+
     public var background:FlxSprite;
 
     var notes:FlxTypedSpriteGroup<ChartNote>;
@@ -36,9 +40,15 @@ class ChartGrid extends ScriptSpriteGroup
 
     public var sections:Array<Array<JSONNote>> = [];
 
-    public function new(noteSize:Int, length:Int, linePos:Int, ?configFile:String)
+    public function new(noteSize:Int, beats:Int, steps:Int, linePos:Int, ?configFile:String)
     {
         super();
+
+        BEATS_PER_SECTION = beats;
+
+        STEPS_PER_BEAT = steps;
+
+        STEPS = BEATS_PER_SECTION * STEPS_PER_BEAT;
 
         configID = configFile;
 
@@ -46,7 +56,7 @@ class ChartGrid extends ScriptSpriteGroup
 
         NOTE_SIZE = noteSize;
 
-        background = new ALEMouseSprite(0, 0, FlxGridOverlay.createGrid(NOTE_SIZE, NOTE_SIZE, NOTE_SIZE * config.strums.length, NOTE_SIZE * length, true, ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -75), ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -50)));
+        background = new ALEMouseSprite(0, 0, FlxGridOverlay.createGrid(NOTE_SIZE, NOTE_SIZE, NOTE_SIZE * config.strums.length, NOTE_SIZE * STEPS, true, ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -75), ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -50)));
         add(background);
         background.onOverlapChange = (isOver) -> {
             pointer.exists = isOver;
@@ -180,7 +190,7 @@ class ChartGrid extends ScriptSpriteGroup
 
         final strumConfig:ALESongStrum = config.strums[data];
 
-        final time:Float = customTime ?? (pointer.y - y <= 0 ? 0 : (pointer.y - y) / background.height * (background.height / NOTE_SIZE) * Conductor.stepCrochet);
+        final time:Float = customTime ?? (pointer.y - y <= 0 ? 0 : (pointer.y - y) / background.height * STEPS * Conductor.stepCrochet);
 
         final anim:String = strumConfig.note;
 

@@ -11,7 +11,8 @@ import flixel.util.FlxGradient;
 
 final NOTE_SIZE:Int = 50;
 
-final STEPS:Int = 16;
+var BEATS_PER_SECTION:Int = 4;
+var STEPS_PER_BEAT:Int = 4;
 
 final LINE_POS:Int = 200;
 
@@ -80,7 +81,7 @@ var chart:ALEChart = {
 
 function addGrid(?config:String)
 {
-    var newGrid:ChartGrid = new ChartGrid(NOTE_SIZE, STEPS, LINE_POS, config ?? 'default');
+    var newGrid:ChartGrid = new ChartGrid(NOTE_SIZE, BEATS_PER_SECTION, STEPS_PER_BEAT, LINE_POS, config ?? 'default');
 
     FlxTween.tween(newGrid, {x: gridOffset}, 0.5, {ease: FlxEase.cubeOut});
 
@@ -104,7 +105,7 @@ function onUpdate(elapsed:Float)
 var musicY(get, never):Float;
 function get_musicY():Float
 {
-    return (Conductor.songPosition / Conductor.stepCrochet * NOTE_SIZE) % (NOTE_SIZE * STEPS);
+    return (Conductor.songPosition / Conductor.stepCrochet * NOTE_SIZE) % (NOTE_SIZE * STEPS_PER_BEAT * BEATS_PER_SECTION);
 }
 
 var MUSIC_CHANGE(get, never):Float;
