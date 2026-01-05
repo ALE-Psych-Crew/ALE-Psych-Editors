@@ -49,8 +49,7 @@ function postCreate()
 
     PlayState.SONG = PlayStateUtil.loadPlayStateSong('monster', 'hard').json;
 
-    Conductor.mapBPMChanges(PlayState.SONG);
-    Conductor.bpm = PlayState.SONG.bpm ?? 100;
+    calculateBPMChanges(PlayState.SONG);
 
     grids = new FlxTypedGroup<ChartGrid>();
     add(grids);
@@ -62,8 +61,6 @@ function postCreate()
     button.releaseCallback = addGrid;
     button.cameras = [camHUD];
     add(button);
-
-    bpmChangeMap = calcBPMChanges();
 }
 
 final GRID_SPACE:Int = 25;
@@ -203,60 +200,10 @@ function saveChart()
     File.saveContent('OSO_CHART.json', Json.stringify(chart));
 }
 
-/*
-var bpmChangeMap:Array<Float>;
-
-function onCreate()
+function onSectionHit(curSection:Int)
 {
-    PlayState.SONG = PlayStateUtil.loadPlayStateSong('monster', 'hard').json;
-
-    bpmChangeMap = calcBPMChanges();
+    debugTrace(curSection);
 }
-
-function calcBPMChanges()
-{
-    var bpmMap:Array<Float> = [];
-
-    var curBpm:Float = PlayState.SONG.bpm;
-
-    for (sectionIndex => section in PlayState.SONG.notes)
-    {
-        if (section.changeBPM)
-            Conductor.bpm = curBpm = section.bpm;
-
-        bpmMap[sectionIndex] = (bpmMap[bpmMap.length - 1] ?? 0) + Conductor.stepCrochet * BEATS_PER_SECTION * STEPS_PER_BEAT;
-    }
-
-    Conductor.bpm = PlayState.SONG.bpm;
-
-    return bpmMap;
-}
-
-var epicSec:Int = -1;
-
-var curSec:Int = 0;
-
-function postUpdate(elapsed:Float)
-{
-    while (Conductor.songPosition > bpmChangeMap[curSec] ?? FlxG.sound.music.length)
-        curSec++;
-
-    while (Conductor.songPosition < bpmChangeMap[curSec - 1] ?? 0)
-        curSec--;
-
-    if (epicSec != curSec)
-    {
-        epicSec = curSec;
-        
-        sectionCallback(epicSec);
-    }
-}
-
-function sectionCallback(curSec:Int)
-{
-    debugTrace(curSec);
-}
-*/
 
 // ----------- ADRIANA SALTE -----------
 
