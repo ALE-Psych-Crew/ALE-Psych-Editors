@@ -7,6 +7,7 @@ import flixel.addons.display.FlxGridOverlay;
 
 import ale.ui.ALEUIUtils;
 import ale.ui.ALEMouseSprite;
+import ale.ui.ALEDropDownMenu;
 
 import flixel.math.FlxPoint;
 
@@ -14,15 +15,17 @@ import funkin.visuals.editors.ChartNote;
 
 import utils.ALEFormatter;
 
+import funkin.visuals.objects.HealthIcon;
+
 //import core.structures.ALESongStrumLine;
 
 class ChartGrid extends ScriptSpriteGroup
 {
     final NOTE_SIZE:Int;
 
-    final BEATS_PER_SECTION:Int;
-    final STEPS_PER_BEAT:Int;
     final STEPS:Int;
+
+    final CHARACTERS_MAP:StringMap<String> = new StringMap();
 
     public var background:FlxSprite;
 
@@ -40,15 +43,17 @@ class ChartGrid extends ScriptSpriteGroup
 
     public var sections:Array<Array<JSONNote>> = [];
 
-    public function new(noteSize:Int, beats:Int, steps:Int, linePos:Int, ?configFile:String)
+    public var icon:HealthIcon;
+
+    public var characterDropdown:ALEDropDownMenu;
+
+    public var character:Null<String>;
+
+    public function new(charactersMap:Array<String>, noteSize:Int, linePos:Int, ?configFile:String)
     {
         super();
 
-        BEATS_PER_SECTION = beats;
-
-        STEPS_PER_BEAT = steps;
-
-        STEPS = BEATS_PER_SECTION * STEPS_PER_BEAT;
+        STEPS = Conductor.stepsPerBeat * Conductor.beatsPerSection;
 
         configID = configFile;
 
@@ -81,6 +86,35 @@ class ChartGrid extends ScriptSpriteGroup
         middleMask.color = FlxColor.BLACK;
         middleMask.alpha = 0.5;
         add(middleMask);
+
+        CHARACTERS_MAP = charactersMap;
+
+        icon = new HealthIcon('face');
+        add(icon);
+
+        final NONE_CHARACTER:String = '< None >';
+
+        characterDropdown = new ALEDropDownMenu(0, -50, [NONE_CHARACTER].concat([for (key in CHARACTERS_MAP.keys()) key]), background.width - ALEUIUtils.OBJECT_SIZE);
+        add(characterDropdown);
+        characterDropdown.selectionCallback = (val) -> {
+            character = val == NONE_CHARACTER ? null : val;
+
+            icon.changeIcon(CHARACTERS_MAP.get(character));
+            icon.scale.set(1, 1);
+            icon.updateHitbox();
+
+            var factor:Float = Math.min(background.width / 2 / icon.width, background.width / 2 / icon.height);
+
+            icon.scale.x = icon.scale.y = factor;
+            icon.updateHitbox();
+            icon.centerOrigin();
+
+            icon.x = this.x + background.width / 2 - icon.width / 1.5;
+            icon.y = this.y - 125 - icon.height / 2;
+            icon.alpha = 0.5;
+        };
+
+        characterDropdown.selectionCallback(NONE_CHARACTER);
     }
 
     var _lastSec:Int = -1;
@@ -94,6 +128,15 @@ class ChartGrid extends ScriptSpriteGroup
             _lastSec = Conductor.curSection;
 
             updateSection(_lastSec);
+        }
+
+        if (characterDropdown.open)
+        {
+            pointer.visible = false;
+
+            return;
+        } else {
+            pointer.visible = true;
         }
 
         if (pointer.exists)

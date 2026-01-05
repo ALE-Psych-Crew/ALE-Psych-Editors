@@ -1,55 +1,51 @@
 import lime.app.Application;
 
 import utils.cool.PlayStateUtil;
+import utils.ALEFormatter;
 
 import funkin.visuals.editors.ChartGrid;
 
-import ale.ui.ALEUIUtils;
+import ale.ui.*;
 
 import flixel.math.FlxPoint;
 import flixel.util.FlxGradient;
+import flixel.util.FlxStringUtil;
 
 final NOTE_SIZE:Int = 50;
 
-var BEATS_PER_SECTION:Int = 4;
-var STEPS_PER_BEAT:Int = 4;
+final SONG:String = 'Satin-Panties';
 
 final LINE_POS:Int = 200;
 
-var bg:FlxSprite;
+final CHARACTERS_MAP:StringMap<String> = new StringMap();
 
-var grids:FlxTypedGroup<ChartGrid>;
+for (char in [for (char in Paths.readDirectory('characters', 'multiple')) char.substr(0, char.length - 5)])
+    CHARACTERS_MAP.set(char, ALEFormatter.getCharacter(char).healthicon);
+
+var bg:FlxSprite;
 
 var music(get, never):FlxSound;
 function get_music(val:String)
     return FlxG.sound.music;
 
-var lastBPM(default, set):Float;
-function set_lastBPM(val:Float):Float
-{
-    lastBPM = val;
+var grids:FlxTypedGroup<ChartGrid>;
 
-    Conductor.bpm = lastBPM;
-
-    return lastBPM;
-}
+var conductorInfo:FlxText;
 
 function postCreate()
 {
     Conductor.songPosition = 0;
 
-    FlxG.sound.playMusic(Paths.inst('songs/monster'));
+    FlxG.sound.playMusic(Paths.inst('songs/' + SONG));
 
     music.pause();
-
-    music.time = 80000;
 
     bg = FlxGradient.createGradientFlxSprite(FlxG.width, FlxG.height, [FlxColor.BLACK, ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -50)]);
     bg.scrollFactor.set();
 
     add(bg);
 
-    PlayState.SONG = PlayStateUtil.loadPlayStateSong('monster', 'hard').json;
+    PlayState.SONG = PlayStateUtil.loadPlayStateSong(SONG, 'hard').json;
 
     calculateBPMChanges(PlayState.SONG);
 
@@ -63,6 +59,19 @@ function postCreate()
     button.releaseCallback = addGrid;
     button.cameras = [camHUD];
     add(button);
+
+    conductorInfo = new FlxText(10, 10, 0, 'Time\nStep\nBeat\nSection\nBPM', 15);
+    conductorInfo.font = ALEUIUtils.FONT;
+
+    var conductorTab:ALETab = new ALETab(0, 0, 200, conductorInfo.height + 20, 'Conductor');
+    add(conductorTab);
+    conductorTab.cameras = [camHUD];
+    
+    conductorInfo.fieldWidth = conductorTab.width - 20;
+    conductorTab.add(conductorInfo);
+
+    conductorTab.x = FlxG.width - conductorTab.width - 40;
+    conductorTab.y = FlxG.height - conductorTab.height - 20;
 }
 
 final GRID_SPACE:Int = 25;
@@ -82,7 +91,7 @@ var chart:ALEChart = {
 
 function addGrid(?config:String)
 {
-    var newGrid:ChartGrid = new ChartGrid(NOTE_SIZE, BEATS_PER_SECTION, STEPS_PER_BEAT, LINE_POS, config ?? 'default');
+    var newGrid:ChartGrid = new ChartGrid(CHARACTERS_MAP, NOTE_SIZE, LINE_POS, config ?? 'default');
 
     FlxTween.tween(newGrid, {x: gridOffset}, 0.5, {ease: FlxEase.cubeOut});
 
@@ -93,11 +102,20 @@ function addGrid(?config:String)
     grids.add(newGrid);
 }
 
+var _lastTime:Float = -1;
+
 function onUpdate(elapsed:Float)
 {
     updateMusic();
 
     updateCamera();
+
+    if (Conductor.songPosition != _lastTime)
+    {
+        _lastTime = Conductor.songPosition;
+
+        conductorInfo.text = 'Time: ' + FlxStringUtil.formatTime(_lastTime / 1000, true) + '\n- Step: ' + Conductor.curStep + '\n- Beat: ' + Conductor.curBeat + '\n- Section: ' + Conductor.curSection + '\nBPM: ' + Conductor.bpm;
+    }
 }
 
 var musicY(get, never):Float;
@@ -122,14 +140,19 @@ var _lastSec:Int = -1;
 
 function updateMusic()
 {
-    if (Controls.UI_UP || Controls.UI_DOWN || ((!Controls.SHIFT && !Conductor.CONTROL) && Controls.MOUSE_WHEEL))
+    if (Controls.UI_LEFT_P || Controls.UI_RIGHT_P || Controls.UI_UP || Controls.UI_DOWN || ((!Controls.SHIFT && !Conductor.CONTROL) && Controls.MOUSE_WHEEL))
     {
         if (Controls.UI_UP || Controls.UI_DOWN)
-            music.time = FlxMath.bound(music.time + MUSIC_CHANGE * (Controls.UI_UP ? -1 : 1), 0, music.length);
+            music.time += MUSIC_CHANGE * (Controls.UI_UP ? -1 : 1);
 
         if (!Controls.SHIFT && !Controls.CONTROL)
             if (Controls.MOUSE_WHEEL)
-                music.time = Math.floor(FlxMath.bound(music.time + Conductor.stepCrochet * (Controls.MOUSE_WHEEL_UP ? -1 : 1), 0, music.length) / Conductor.stepCrochet) * Conductor.stepCrochet;
+                music.time += Conductor.stepCrochet * (Controls.MOUSE_WHEEL_DOWN ? 1 : -1);
+
+        if (Controls.UI_LEFT_P || Controls.UI_RIGHT_P)
+            music.time = CoolUtil.snapNumber(music.time + Conductor.sectionCrochet * (Controls.UI_LEFT_P ? -1 : 1), Conductor.sectionCrochet) + 1;
+        
+        music.time = FlxMath.bound(music.time, 0, music.length);
 
         if (music.playing)
             music.pause();
@@ -139,10 +162,10 @@ function updateMusic()
         else
             music.resume();
     }
-    
-    camGame.scroll.y = -LINE_POS + musicY;
 
     Conductor.songPosition = music.time;
+    
+    camGame.scroll.y = -LINE_POS + musicY;
 }
 
 function updateCamera()
@@ -169,7 +192,7 @@ function onHotReloadingConfig()
         addHotReloadingFile('scripts/classes/funkin/visuals/editors/' + file + '.hx');
 }
 
-if (false)
+if (true)
 {
     final window:Window = Application.current.window;
 
