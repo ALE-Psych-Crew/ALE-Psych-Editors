@@ -36,11 +36,11 @@ function set_lastBPM(val:Float):Float
 
 function postCreate()
 {
+    Conductor.songPosition = 0;
+
     FlxG.sound.playMusic(Paths.voices('songs/monster'));
 
     music.pause();
-
-    music.time = 0;
 
     bg = FlxGradient.createGradientFlxSprite(FlxG.width, FlxG.height, [FlxColor.BLACK, ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -50)]);
     bg.scrollFactor.set();
@@ -104,7 +104,7 @@ function onUpdate(elapsed:Float)
 var musicY(get, never):Float;
 function get_musicY():Float
 {
-    return (Conductor.songPosition / Conductor.stepCrochet * NOTE_SIZE) % (NOTE_SIZE * STEPS_PER_BEAT * BEATS_PER_SECTION);
+    return (Conductor.songPosition - bpmChangeMap[curBPMIndex].time) % Conductor.sectionCrochet / Conductor.stepCrochet * NOTE_SIZE;
 }
 
 var MUSIC_CHANGE(get, never):Float;
@@ -123,13 +123,6 @@ var _lastSec:Int = -1;
 
 function updateMusic()
 {
-    /*
-    if (CURRENT_SECTION.changeBPM != null)
-        if (CURRENT_SECTION.changeBPM)
-            if (CURRENT_SECTION.bpm != lastBPM)
-                lastBPM = CURRENT_SECTION.bpm;
-    */
-
     if (Controls.UI_UP || Controls.UI_DOWN || ((!Controls.SHIFT && !Conductor.CONTROL) && Controls.MOUSE_WHEEL))
     {
         if (Controls.UI_UP || Controls.UI_DOWN)
