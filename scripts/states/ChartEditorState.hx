@@ -38,9 +38,11 @@ function postCreate()
 {
     Conductor.songPosition = 0;
 
-    FlxG.sound.playMusic(Paths.voices('songs/monster'));
+    FlxG.sound.playMusic(Paths.inst('songs/monster'));
 
     music.pause();
+
+    music.time = 80000;
 
     bg = FlxGradient.createGradientFlxSprite(FlxG.width, FlxG.height, [FlxColor.BLACK, ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -50)]);
     bg.scrollFactor.set();
@@ -96,9 +98,6 @@ function onUpdate(elapsed:Float)
     updateMusic();
 
     updateCamera();
-
-    if (Controls.ACCEPT)
-        saveChart();
 }
 
 var musicY(get, never):Float;
@@ -160,44 +159,6 @@ function updateCamera()
     bg.scale.x = bg.scale.y = CoolUtil.fpsLerp(bg.scale.x, 1 / camData.zoom, 0.25);
 }
 
-function saveChart()
-{
-    chart.strumLines = [];
-
-    for (gridIndex => grid in grids)
-    {
-        for (sectionIndex => section in grid.sections)
-        {
-            chart.sections[sectionIndex] ??= {
-                notes: []
-            };
-
-            chart.sections[sectionIndex].notes = [];
-
-            for (note in section)
-            {
-                if (note == null)
-                    continue;
-
-                chart.sections[sectionIndex].notes.push([
-                    note.time,
-                    note.data,
-                    note.length,
-                    note.type,
-                    gridIndex
-                ]);
-            }
-        }
-    }
-
-    File.saveContent('OSO_CHART.json', Json.stringify(chart));
-}
-
-function onSectionHit(curSection:Int)
-{
-    debugTrace(curSection);
-}
-
 // ----------- ADRIANA SALTE -----------
 
 function onHotReloadingConfig()
@@ -208,7 +169,7 @@ function onHotReloadingConfig()
         addHotReloadingFile('scripts/classes/funkin/visuals/editors/' + file + '.hx');
 }
 
-if (true)
+if (false)
 {
     final window:Window = Application.current.window;
 
