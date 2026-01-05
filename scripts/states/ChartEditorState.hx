@@ -34,6 +34,8 @@ var conductorInfo:FlxText;
 
 function postCreate()
 {
+    shouldUpdateMusic = false;
+
     Conductor.songPosition = 0;
 
     FlxG.sound.playMusic(Paths.inst('songs/' + SONG));
@@ -106,7 +108,7 @@ var _lastTime:Float = -1;
 
 function onUpdate(elapsed:Float)
 {
-    updateMusic();
+    updateMusicControls();
 
     updateCamera();
 
@@ -138,20 +140,19 @@ function get_CURRENT_SECTION():SwagSection
 
 var _lastSec:Int = -1;
 
-function updateMusic()
+function updateMusicControls()
 {
     if (Controls.UI_LEFT_P || Controls.UI_RIGHT_P || Controls.UI_UP || Controls.UI_DOWN || ((!Controls.SHIFT && !Conductor.CONTROL) && Controls.MOUSE_WHEEL))
     {
         if (Controls.UI_UP || Controls.UI_DOWN)
             music.time += MUSIC_CHANGE * (Controls.UI_UP ? -1 : 1);
 
-        if (!Controls.SHIFT && !Controls.CONTROL)
-            if (Controls.MOUSE_WHEEL)
-                music.time += Conductor.stepCrochet * (Controls.MOUSE_WHEEL_DOWN ? 1 : -1);
+        if (Controls.MOUSE_WHEEL)
+            music.time += Conductor.stepCrochet * (Controls.MOUSE_WHEEL_DOWN ? 1 : -1);
 
         if (Controls.UI_LEFT_P || Controls.UI_RIGHT_P)
-            music.time = CoolUtil.snapNumber(music.time + Conductor.sectionCrochet * (Controls.UI_LEFT_P ? -1 : 1), Conductor.sectionCrochet) + 1;
-        
+            music.time += Conductor.sectionCrochet * (Controls.UI_LEFT_P ? -1 : 1) * (Controls.SHIFT ? 4 : 1);
+
         music.time = FlxMath.bound(music.time, 0, music.length);
 
         if (music.playing)
@@ -166,6 +167,12 @@ function updateMusic()
     Conductor.songPosition = music.time;
     
     camGame.scroll.y = -LINE_POS + musicY;
+
+    shouldUpdateMusic = true;
+
+    updateMusic();
+
+    shouldUpdateMusic = false;
 }
 
 function updateCamera()
@@ -186,13 +193,11 @@ function updateCamera()
 
 function onHotReloadingConfig()
 {
-    debugTrace('Init State');
-
     for (file in ['ChartNote', 'ChartGrid'])
         addHotReloadingFile('scripts/classes/funkin/visuals/editors/' + file + '.hx');
 }
 
-if (true)
+if (false)
 {
     final window:Window = Application.current.window;
 
