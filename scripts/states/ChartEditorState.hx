@@ -11,6 +11,52 @@ import flixel.math.FlxPoint;
 import flixel.util.FlxGradient;
 import flixel.util.FlxStringUtil;
 
+using StringTools;
+
+function calculateBPMChanges(?song:Null<ALESong>)
+{
+    if (song == null)
+    {
+        bpmChangeMap = null;
+
+        return;
+    }
+
+    var curTime:Float = 0;
+    var curStep:Int = 0;
+
+    Conductor.bpm = song.bpm;
+    
+    bpmChangeMap = [
+        {
+            bpm: Conductor.bpm,
+            time: 0,
+            step: 0
+        }
+    ];
+
+    for (section in song.sections)
+    {
+        if (section.changeBPM && section.bpm != Conductor.bpm)
+        {
+            Conductor.bpm = section.bpm;
+
+            bpmChangeMap.push(
+                {
+                    bpm: Conductor.bpm,
+                    time: curTime,
+                    step: curStep
+                }
+            );
+        }
+        
+        curTime += Conductor.sectionCrochet;
+        curStep += Conductor.beatsPerSection * Conductor.stepsPerBeat;
+    }
+
+    Conductor.bpm = song.bpm;
+}
+
 final NOTE_SIZE:Int = 50;
 
 final SONG:String = 'Satin-Panties';
@@ -32,11 +78,13 @@ var grids:FlxTypedGroup<ChartGrid>;
 
 var conductorInfo:FlxText;
 
+var _song:ALESong;
+
 function postCreate()
 {
     Conductor.songPosition = 0;
 
-    FlxG.sound.playMusic(Paths.inst('songs/' + SONG));
+    FlxG.sound.playMusic(Paths.voices('songs/' + SONG));
 
     music.pause();
 
@@ -45,15 +93,72 @@ function postCreate()
 
     add(bg);
 
-    PlayState.SONG = PlayStateUtil.loadPlayStateSong(SONG, 'hard').json;
+    _song = ALEFormatter.getSong(SONG, 'hard');
 
-    calculateBPMChanges(PlayState.SONG);
+    calculateBPMChanges(_song);
 
     grids = new FlxTypedGroup<ChartGrid>();
     add(grids);
 
-    for (i in 0...2)
-        addGrid();
+    for (strl in _song.strumLines)
+    {
+        final grid:ChartGrid = addGrid(strl.file);
+
+        grid.setCharacter(strl.character);
+    }
+
+    var timedNotes:Array<Array<Float>> = [for (i in 0..._song.sections.length) []];
+
+    var noteIndex:Int = -1;
+
+    var noteTime:Float = 0;
+
+    var noteSection:Int = 0;
+
+    for (section in _song.sections)
+    {
+        for (note in section.notes)
+        {
+            while (noteIndex < bpmChangeMap.length - 1 && note[0] > bpmChangeMap[noteIndex + 1].time)
+            {
+                noteIndex++;
+
+                Conductor.bpm = bpmChangeMap[noteIndex].bpm;
+
+                noteTime = bpmChangeMap[noteIndex].time;
+            }
+
+            while (note[0] >= noteTime + Conductor.sectionCrochet)
+            {
+                noteTime += Conductor.sectionCrochet;
+
+                noteSection++;
+            }
+
+            timedNotes[noteSection] ??= [];
+
+            timedNotes[noteSection].push(note);
+        }
+    }
+
+    Conductor.bpm = _song.bpm;
+
+    for (sectionIndex => section in timedNotes)
+    {
+        for (note in section)
+        {
+            grids.members[note[4]].sections[sectionIndex] ??= [];
+
+            grids.members[note[4]].sections[sectionIndex].push(
+                {
+                    time: note[0],
+                    data: note[1],
+                    length: note[2],
+                    type: note[3]
+                }
+            );
+        }
+    }
 
     var button = new ale.ui.ALEButton(100, 100, 'Create Grid');
     button.releaseCallback = addGrid;
@@ -83,13 +188,13 @@ var camData:{pos:Float, zoom:Float} = {
     zoom: 1
 };
 
-var chart:ALEChart = {
+var chart:ALESong = {
     strumLines: [],
     sections: [],
     format: 'ale-psych-0.1-format'
 };
 
-function addGrid(?config:String)
+function addGrid(?config:String):ChartGrid
 {
     var newGrid:ChartGrid = new ChartGrid(CHARACTERS_MAP, NOTE_SIZE, LINE_POS, config ?? 'default');
 
@@ -100,6 +205,8 @@ function addGrid(?config:String)
     camData.pos = Math.max(0, gridOffset - GRID_SPACE) / 2 - FlxG.width / 2;
 
     grids.add(newGrid);
+
+    return newGrid;
 }
 
 function onUpdate(elapsed:Float)
@@ -186,8 +293,8 @@ function updateCamera()
 
 function onHotReloadingConfig()
 {
-    for (file in ['ChartNote', 'ChartGrid'])
-        addHotReloadingFile('scripts/classes/funkin/visuals/editors/' + file + '.hx');
+    for (file in ['funkin.visuals.editors.ChartNote', 'funkin.visuals.editors.ChartGrid', 'utils.ALEFormatter'])
+        addHotReloadingFile('scripts/classes/' + file.replace('.', '/') + '.hx');
 }
 
 if (true)

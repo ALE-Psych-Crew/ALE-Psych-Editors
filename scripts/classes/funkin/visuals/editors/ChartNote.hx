@@ -9,6 +9,8 @@ import funkin.visuals.shaders.RGBShaderReference;
 
 class ChartNote extends ScriptSpriteGroup
 {
+    final CHARTING_STATE:MusicBeatState = MusicBeatState.instance;
+
     final NOTE_SIZE:Int;
 
     public var texture:FlxSprite;
@@ -70,7 +72,8 @@ class ChartNote extends ScriptSpriteGroup
         this.data = data;
 
         this.x = data * NOTE_SIZE;
-        this.y = time / Conductor.stepCrochet * NOTE_SIZE;
+
+        this.y = (time - CoolUtil.snapNumber(Conductor.songPosition - CHARTING_STATE.bpmChangeMap[CHARTING_STATE.curBPMIndex].time, Conductor.sectionCrochet)) / Conductor.stepCrochet * NOTE_SIZE;
 
         this.type = type;
 

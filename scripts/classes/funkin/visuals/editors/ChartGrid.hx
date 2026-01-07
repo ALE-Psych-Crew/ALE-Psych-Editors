@@ -18,9 +18,12 @@ import utils.ALEFormatter;
 import funkin.visuals.objects.HealthIcon;
 
 //import core.structures.ALESongStrumLine;
+//import core.structures.GridNote;
 
 class ChartGrid extends ScriptSpriteGroup
 {
+    final CHARTING_STATE:MusicBeatState = MusicBeatState.instance;
+    
     final NOTE_SIZE:Int;
 
     final STEPS:Int;
@@ -41,13 +44,15 @@ class ChartGrid extends ScriptSpriteGroup
 
     public final config:ALESongStrumLine;
 
-    public var sections:Array<Array<JSONNote>> = [];
+    public var sections:Array<Array<GridNote>> = [];
 
     public var icon:HealthIcon;
 
     public var characterDropdown:ALEDropDownMenu;
 
     public var character:Null<String>;
+
+    final NONE_CHARACTER:String = '< None >';
 
     public function new(charactersMap:Array<String>, noteSize:Int, linePos:Int, ?configFile:String)
     {
@@ -87,29 +92,32 @@ class ChartGrid extends ScriptSpriteGroup
         icon = new HealthIcon('face');
         add(icon);
 
-        final NONE_CHARACTER:String = '< None >';
-
         characterDropdown = new ALEDropDownMenu(0, -50, [NONE_CHARACTER].concat([for (key in CHARACTERS_MAP.keys()) key]), background.width - ALEUIUtils.OBJECT_SIZE);
         add(characterDropdown);
-        characterDropdown.selectionCallback = (val) -> {
-            character = val == NONE_CHARACTER ? null : val;
+        characterDropdown.selectionCallback = setCharacter;
 
-            icon.changeIcon(CHARACTERS_MAP.get(character));
-            icon.scale.set(1, 1);
-            icon.updateHitbox();
+        setCharacter(NONE_CHARACTER);
+    }
 
-            var factor:Float = Math.min(background.width / 2 / icon.width, background.width / 2 / icon.height);
+    public function setCharacter(char:String)
+    {
+        character = char == NONE_CHARACTER ? null : char;
 
-            icon.scale.x = icon.scale.y = factor;
-            icon.updateHitbox();
-            icon.centerOrigin();
+        icon.changeIcon(CHARACTERS_MAP.get(character));
+        icon.scale.set(1, 1);
+        icon.updateHitbox();
 
-            icon.x = this.x + background.width / 2 - icon.width / 1.5;
-            icon.y = this.y - 125 - icon.height / 2;
-            icon.alpha = 0.5;
-        };
+        var factor:Float = Math.min(background.width / 2 / icon.width, background.width / 2 / icon.height);
 
-        characterDropdown.selectionCallback(NONE_CHARACTER);
+        icon.scale.x = icon.scale.y = factor;
+        icon.updateHitbox();
+        icon.centerOrigin();
+
+        icon.x = this.x + background.width / 2 - icon.width / 1.5;
+        icon.y = this.y - 125 - icon.height / 2;
+        icon.alpha = 0.5;
+
+        characterDropdown.bg.value = char;
     }
 
     var _lastSec:Int = -1;
@@ -228,7 +236,7 @@ class ChartGrid extends ScriptSpriteGroup
 
         final strumConfig:ALESongStrum = config.strums[data];
 
-        final time:Float = customTime ?? (pointer.y - y <= 0 ? 0 : (pointer.y - y) / background.height * STEPS * Conductor.stepCrochet);
+        final time:Float = customTime ?? (CoolUtil.snapNumber(Conductor.songPosition - CHARTING_STATE.bpmChangeMap[CHARTING_STATE.curBPMIndex].time, Conductor.sectionCrochet) + (pointer.y - y <= 0 ? 0 : ((pointer.y - y) / background.height * STEPS * Conductor.stepCrochet)));
 
         final anim:String = strumConfig.note;
 

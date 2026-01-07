@@ -1,6 +1,6 @@
 package core.structures;
 
-typedef ALESongStrum = {
+typedef ALEStrum = {
     var idle:String;
     var hit:String;
     var pressed:String;
