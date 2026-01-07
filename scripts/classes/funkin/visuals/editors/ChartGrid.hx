@@ -82,11 +82,6 @@ class ChartGrid extends ScriptSpriteGroup
         add(positionLine);
         positionLine.scrollFactor.set(1);
 
-        var middleMask:FlxSprite = new FlxSprite(0, background.height).makeGraphic(Math.floor(background.width), Math.floor(background.height));
-        middleMask.color = FlxColor.BLACK;
-        middleMask.alpha = 0.5;
-        add(middleMask);
-
         CHARACTERS_MAP = charactersMap;
 
         icon = new HealthIcon('face');
@@ -126,7 +121,7 @@ class ChartGrid extends ScriptSpriteGroup
         if (_lastSec != Conductor.curSection)
         {
             _lastSec = Conductor.curSection;
-
+            
             updateSection(_lastSec);
         }
 
@@ -306,11 +301,12 @@ class ChartGrid extends ScriptSpriteGroup
 
         selected.resize(0);
 
-        for (note in notes)
+        while (notes.members.length > 0)
         {
-            notePool.push(note);
+            var n = notes.members.pop();
 
-            notes.members.remove(note, true);
+            if (n != null)
+                notePool.push(n);
         }
 
         var jsonSection:Array<JSONNote> = sections[curSection];

@@ -34,8 +34,6 @@ var conductorInfo:FlxText;
 
 function postCreate()
 {
-    shouldUpdateMusic = false;
-
     Conductor.songPosition = 0;
 
     FlxG.sound.playMusic(Paths.inst('songs/' + SONG));
@@ -104,26 +102,31 @@ function addGrid(?config:String)
     grids.add(newGrid);
 }
 
-var _lastTime:Float = -1;
-
 function onUpdate(elapsed:Float)
 {
     updateMusicControls();
 
     updateCamera();
-
-    if (Conductor.songPosition != _lastTime)
-    {
-        _lastTime = Conductor.songPosition;
-
-        conductorInfo.text = 'Time: ' + FlxStringUtil.formatTime(_lastTime / 1000, true) + '\n- Step: ' + Conductor.curStep + '\n- Beat: ' + Conductor.curBeat + '\n- Section: ' + Conductor.curSection + '\nBPM: ' + Conductor.bpm;
-    }
 }
 
 var musicY(get, never):Float;
 function get_musicY():Float
 {
     return (Conductor.songPosition - bpmChangeMap[curBPMIndex].time) % Conductor.sectionCrochet / Conductor.stepCrochet * NOTE_SIZE;
+}
+
+var updateTime:Float = -1;
+
+function postUpdate(elapsed:Float)
+{
+    if (updateTime != Conductor.songPosition)
+    {
+        updateTime = Conductor.songPosition;
+
+        conductorInfo.text = 'Time: ' + FlxStringUtil.formatTime(Conductor.songPosition / 1000, true) + '\n- Step: ' + Conductor.curStep + '\n- Beat: ' + Conductor.curBeat + '\n- Section: ' + Conductor.curSection + '\nBPM: ' + Conductor.bpm;
+
+        camGame.scroll.y = -LINE_POS + musicY;
+    }
 }
 
 var MUSIC_CHANGE(get, never):Float;
@@ -138,11 +141,9 @@ function get_CURRENT_SECTION():SwagSection
     return PlayState.SONG.notes[Conductor.curSection];
 }
 
-var _lastSec:Int = -1;
-
 function updateMusicControls()
 {
-    if (Controls.UI_LEFT_P || Controls.UI_RIGHT_P || Controls.UI_UP || Controls.UI_DOWN || ((!Controls.SHIFT && !Conductor.CONTROL) && Controls.MOUSE_WHEEL))
+    if (Controls.UI_LEFT_P || Controls.UI_RIGHT_P || Controls.UI_UP || Controls.UI_DOWN || ((!Controls.SHIFT && !Controls.CONTROL) && Controls.MOUSE_WHEEL))
     {
         if (Controls.UI_UP || Controls.UI_DOWN)
             music.time += MUSIC_CHANGE * (Controls.UI_UP ? -1 : 1);
@@ -165,14 +166,6 @@ function updateMusicControls()
     }
 
     Conductor.songPosition = music.time;
-    
-    camGame.scroll.y = -LINE_POS + musicY;
-
-    shouldUpdateMusic = true;
-
-    updateMusic();
-
-    shouldUpdateMusic = false;
 }
 
 function updateCamera()
@@ -197,7 +190,7 @@ function onHotReloadingConfig()
         addHotReloadingFile('scripts/classes/funkin/visuals/editors/' + file + '.hx');
 }
 
-if (false)
+if (true)
 {
     final window:Window = Application.current.window;
 
