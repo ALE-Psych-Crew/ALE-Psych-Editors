@@ -228,7 +228,7 @@ class ChartGrid extends ScriptSpriteGroup
 
     var longNote:Null<ChartNote> = null;
 
-    function addNote(?customData:Int, ?customTime:Float, ?length:Float, ?type:String, ?push:Bool)
+    function addNote(?customData:Int, ?customTime:Float, ?length:Float, ?type:String, ?push:Bool):ChartNote
     {
         sections[Conductor.curSection] ??= [];
 
@@ -271,6 +271,8 @@ class ChartGrid extends ScriptSpriteGroup
 
             longNote = note;
         }
+
+        return note;
     }
 
     function removeNote(note:ChartNote)
@@ -279,6 +281,8 @@ class ChartGrid extends ScriptSpriteGroup
             deSelectNote(note);
 
         sections[Conductor.curSection][note.index] = null;
+
+        debugTrace(sections[Conductor.curSection]);
 
         notes.group.members.remove(note);
 
@@ -321,9 +325,9 @@ class ChartGrid extends ScriptSpriteGroup
 
         jsonSection ??= [];
 
-        for (note in jsonSection)
+        for (index => note in jsonSection)
             if (note != null)
-                addNote(note.data, note.time, note.length, note.type, false);
+                addNote(note.data, note.time, note.length, note.type, false).index = index;
     }
 
     override function destroy()
