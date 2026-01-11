@@ -52,6 +52,8 @@ class ChartGrid extends ScriptSpriteGroup
 
     public var character:Null<String>;
 
+    public var charIndex:Int = 0;
+
     final NONE_CHARACTER:String = '< None >';
 
     public function new(charactersMap:Array<String>, noteSize:Int, linePos:Int, ?configFile:String)
@@ -60,9 +62,7 @@ class ChartGrid extends ScriptSpriteGroup
 
         STEPS = Conductor.stepsPerBeat * Conductor.beatsPerSection;
 
-        configID = configFile;
-
-        config = ALEFormatter.getStrumLine(configID);
+        config = ALEFormatter.getStrumLine(configFile);
 
         NOTE_SIZE = noteSize;
 

@@ -82,16 +82,23 @@ var loadedSong:ALESong;
 
 var sections:Array<ChartSection> = [];
 
-function new(?song:String)
+final song:String;
+final difficulty:String;
+
+function new(?mySong:String, ?myDifficulty:String)
 {
-    song ??= 'monster';
+    song = mySong ?? 'monster';
+
+    difficulty = myDifficulty ?? 'normal';
 
     FlxG.sound.playMusic(Paths.voices('songs/' + song));
 
     music.pause();
 
-    loadedSong = ALEFormatter.getSong(song, 'hard');
+    loadedSong = ALEFormatter.getSong(song, difficulty);
 }
+
+var gridMap:Array<Array<ChartGrid>> = [];
 
 function postCreate()
 {
@@ -110,17 +117,17 @@ function postCreate()
     grids = new FlxTypedGroup<ChartGrid>();
     add(grids);
 
-    var gridMap:Array<Array<ChartGrid>> = [];
-
     for (index => strl in loadedSong.strumLines)
     {
         gridMap[index] ??= [];
 
-        for (character in strl.characters)
+        for (charIndex => character in strl.characters)
         {
             final grid:ChartGrid = addGrid(strl.file);
+            grid.charIndex = charIndex;
+            grid.configID = strl.file + '::' + index;
             grid.setCharacter(character);
-            
+
             gridMap[index].push(grid);
         }
     }
@@ -133,8 +140,14 @@ function postCreate()
 
     var noteSection:Int = 0;
 
-    for (section in loadedSong.sections)
+    for (sectionIndex => section in loadedSong.sections)
     {
+        sections[sectionIndex] = {
+            camera: section.camera,
+            bpm: section.bpm,
+            changeBPM: section.changeBPM
+        };
+        
         for (note in section.notes)
         {
             while (noteIndex < bpmChangeMap.length - 1 && note[0] > bpmChangeMap[noteIndex + 1].time)
@@ -165,9 +178,9 @@ function postCreate()
     {
         for (note in section)
         {
-            gridMap[note[4]][note[5]].sections[sectionIndex] ??= [];
+            gridMap[note[4][0]][note[4][1]].sections[sectionIndex] ??= [];
 
-            gridMap[note[4]][note[5]].sections[sectionIndex].push(
+            gridMap[note[4][0]][note[4][1]].sections[sectionIndex].push(
                 {
                     time: note[0],
                     data: note[1],
@@ -195,8 +208,6 @@ function postCreate()
 
     conductorTab.x = FlxG.width - conductorTab.width - 40;
     conductorTab.y = FlxG.height - conductorTab.height - 20;
-
-    saveChart();
 }
 
 final GRID_SPACE:Int = 25;
@@ -290,7 +301,7 @@ function get_CURRENT_SECTION():SwagSection
 
 function updateMusicControls()
 {
-    if ((Controls.UI_LEFT_P || Controls.UI_RIGHT_P || Controls.UI_UP || Controls.UI_DOWN || Controls.MOUSE_WHEEL) && !Controls.SHIFT && !Controls.CONTROL)
+    if ((Controls.UI_LEFT_P || Controls.UI_RIGHT_P || Controls.UI_UP || Controls.UI_DOWN || Controls.MOUSE_WHEEL) && !(Controls.SHIFT && Conductor.MOUSE_WHEEL) && !Controls.CONTROL)
     {
         if (Controls.UI_UP || Controls.UI_DOWN)
             music.time += MUSIC_CHANGE * (Controls.UI_UP ? -1 : 1);
@@ -331,6 +342,8 @@ function updateCamera()
 
 function saveChart()
 {
+    final strlIndexMap:StringMap<Int> = new StringMap<Int>();
+
     final chart:ALESong = {
         strumLines: [],
         sections: [],
@@ -340,14 +353,67 @@ function saveChart()
         bpm: loadedSong.bpm
     };
 
+    for (index => section in sections)
+    {
+        chart.sections[index] = {
+            notes: [],
+            camera: section.camera,
+            bpm: section.bpm,
+            changeBPM: section.changeBPM
+        };
+    }
+
     for (grid in grids)
     {
         if (grid != null)
         {
-            debugTrace(grid.character);
-            debugTrace(grid.configID);
+            if (strlIndexMap.exists(grid.configID))
+            {
+                chart.strumLines[strlIndexMap.get(grid.configID)].characters[grid.charIndex] = grid.character;
+            } else {
+                strlIndexMap.set(grid.configID, chart.strumLines.length);
+
+                chart.strumLines.push(
+                    {
+                        file: grid.configID.split('::')[0],
+                        position: grid.position,
+                        rightToLeft: grid.rightToLeft,
+                        visible: grid.visibleStrumline,
+                        characters: [grid.character]
+                    }
+                );
+            }
+
+            for (index => section in grid.sections)
+            {
+                if (section == null)
+                    continue;
+
+                chart.sections[index] ??= {
+                    notes: [],
+                    camera: [0, 0],
+                    bpm: loadedSong.bpm,
+                    changeBPM: false
+                };
+
+                for (note in section)
+                {
+                    if (note == null)
+                        continue;
+
+                    chart.sections[index].notes.push([
+                        note.time,
+                        note.data,
+                        note.length,
+                        note.type,
+                        [strlIndexMap.get(grid.configID), grid.charIndex]
+                    ]);
+                }
+            }
         }
     }
+
+    File.saveContent(difficulty + '.json', Json.stringify(chart));
 }
 
 // ----------- ADRIANA SALTE -----------

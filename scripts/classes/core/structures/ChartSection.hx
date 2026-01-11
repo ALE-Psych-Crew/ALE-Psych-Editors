@@ -1,7 +1,7 @@
 package core.structures;
 
 typedef ChartSection = {
-    var target:Int;
+    var camera:Array<Int>;
     var bpm:Float;
     var changeBPM:Bool;
 }

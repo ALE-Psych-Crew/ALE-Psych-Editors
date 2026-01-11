@@ -39,7 +39,8 @@ class ALEFormatter
                             },
                             rightToLeft: i == 0,
                             visible: i != 2,
-                            characters: [[json.player2, json.player1, json.gfVersion][i]]
+                            characters: [[json.player2, json.player1, json.gfVersion][i]],
+                            type: ['opponent', 'player', 'extra'][i]
                         }
                     }
                 ],
@@ -54,8 +55,7 @@ class ALEFormatter
             {
                 var curSection:ALESongSection = {
                     notes: [],
-                    camera: section.gfSection ? 2 : section.mustHitSection ? 1 : 0,
-                    isPlayer: section.mustHitSection,
+                    camera: [section.gfSection ? 2 : section.mustHitSection ? 1 : 0, 0],
                     bpm: section.changeBPM == true ? section.bpm : json.bpm,
                     changeBPM: section.changeBPM ?? false
                 };
@@ -68,9 +68,8 @@ class ALEFormatter
                             note[0],
                             note[1] % 4,
                             note[2],
-                            note[3] ?? '',
-                            note[3] == 'GF Sing' || section.gfSection && note[1] < 4 ? 2 : (section.mustHitSection && note[1] < 4) || (!section.mustHitSection && note[1] > 3) ? 1 : 0,
-                            0
+                            note[3] == 'GF Sing' && section.gfSection && note[1] < 4 ? '' : (note[3] ?? ''),
+                            [note[3] == 'GF Sing' || section.gfSection && note[1] < 4 ? 2 : (section.mustHitSection && note[1] < 4) || (!section.mustHitSection && note[1] > 3) ? 1 : 0, 0]
                         ]);
                     }
                 }
