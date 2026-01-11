@@ -1,10 +1,18 @@
 package utils;
 
-//import core.structures.ALESong;
-//import core.structures.ALESongStrumLine;
-//import core.structures.PsychSong;
+/*
+import core.structures.ALESong;
+import core.structures.ALESongSection;
+import core.structures.ALEStrumLine;
+import core.structures.PsychSong;
+import core.structures.PsychSongSection;
+
+import core.enums.CharacterType;
+*/
 
 import utils.cool.FileUtil;
+
+typedef ALECharacter = Dynamic;
 
 class ALEFormatter
 {
@@ -16,7 +24,7 @@ class ALEFormatter
 
         final complexPath:String = FileUtil.searchComplexFile(path);
 
-        var json:String = Paths.json(complexPath.substring(complexPath, path.length - 5));
+        var json:Dynamic = Paths.json(complexPath.substring(0, path.length - 5));
 
         var result:ALESong = null;
 
@@ -25,8 +33,8 @@ class ALEFormatter
 
         if (result == null)
         {
-            json = getPsychSong(json);
-
+            var psychSong:PsychSong = getPsychSong(json);
+   
             result = {
                 strumLines: [
                     for (i in 0...3)
@@ -39,25 +47,25 @@ class ALEFormatter
                             },
                             rightToLeft: i == 0,
                             visible: i != 2,
-                            characters: [[json.player2, json.player1, json.gfVersion][i]],
-                            type: ['opponent', 'player', 'extra'][i]
+                            characters: [[psychSong.player2, psychSong.player1, psychSong.gfVersion][i]],
+                            type: cast ['opponent', 'player', 'extra'][i]
                         }
                     }
                 ],
                 sections: [],
-                speed: json.speed,
-                bpm: json.bpm,
+                speed: psychSong.speed,
+                bpm: psychSong.bpm,
                 format: FORMAT,
                 stepsPerBeat: 4,
                 beatsPerSection: 4
             };
 
-            for (section in json.notes)
+            for (section in psychSong.notes)
             {
                 var curSection:ALESongSection = {
                     notes: [],
                     camera: [section.gfSection ? 2 : section.mustHitSection ? 1 : 0, 0],
-                    bpm: section.changeBPM == true ? section.bpm : json.bpm,
+                    bpm: section.changeBPM == true ? section.bpm : psychSong.bpm,
                     changeBPM: section.changeBPM ?? false
                 };
 
@@ -65,13 +73,15 @@ class ALEFormatter
                 {
                     for (note in section.sectionNotes)
                     {
-                        curSection.notes.push([
+                        var arrayNote:Array<Dynamic> = [
                             note[0],
                             note[1] % 4,
                             note[2],
                             note[3] == 'GF Sing' && section.gfSection && note[1] < 4 ? '' : (note[3] ?? ''),
                             [note[3] == 'GF Sing' || section.gfSection && note[1] < 4 ? 2 : (section.mustHitSection && note[1] < 4) || (!section.mustHitSection && note[1] > 3) ? 1 : 0, 0]
-                        ]);
+                        ];
+
+                        curSection.notes.push(arrayNote);
                     }
                 }
 
@@ -145,7 +155,7 @@ class ALEFormatter
         return Paths.json('characters/' + char);
     }
 
-    public static function getStrumLine(strl:String):ALESongStrumLine
+    public static function getStrumLine(strl:String):ALEStrumLine
     {
         return cast Paths.json('strumLines/' + strl);
     }

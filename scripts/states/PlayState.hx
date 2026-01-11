@@ -8,16 +8,20 @@ import funkin.visuals.game.StrumLine;
 
 using StringTools;
 
-static var SONG:ALESong;
+var SONG:ALESong;
+
+var instSound:openfl.media.Sound;
+
+function new(?song:String, ?difficulty:String)
+{
+    SONG ??= ALEFormatter.getSong(song ?? 'fresh', difficulty ?? 'hard');
+
+    instSound = Paths.voices('songs/' + (song ?? 'fresh'));
+}
 
 function onCreate()
 {
-    ClientPrefs.data.downScroll = false;
-
-    if (SONG == null)
-        SONG = ALEFormatter.getSong('fresh', 'hard');
-
-    FlxG.sound.playMusic(Paths.inst('songs/fresh'));
+    FlxG.sound.playMusic(instSound);
 
     loadSong();
 }
@@ -27,7 +31,7 @@ function loadSong()
     initStrumLines();
 }
 
-public var strumLines:FlxTypedGroup<StrumLine>;
+var strumLines:FlxTypedGroup<StrumLine>;
 
 function initStrumLines()
 {
@@ -56,6 +60,11 @@ function initStrumLines()
 
     for (strlIndex => strl in SONG.strumLines)
         strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed));
+}
+
+function onUpdate(elapsed:Float)
+{
+    Conductor.songPosition = FlxG.sound.music.time;
 }
 
 // ------- ADRIANA SALTE -------

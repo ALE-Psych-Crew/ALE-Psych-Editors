@@ -3,9 +3,11 @@ package funkin.visuals.game;
 import funkin.visuals.shaders.RGBPalette;
 import funkin.visuals.shaders.RGBShaderReference;
 
-//import core.structures.ALEStrum;
+/*
+import core.structures.ALEStrum;
 
-//import core.enums.NoteType;
+import core.enums.NoteType;
+*/
 
 class ALENote extends scripting.haxe.ScriptSprite
 {
@@ -42,7 +44,7 @@ class ALENote extends scripting.haxe.ScriptSprite
         switch (type)
         {
             case 'note':
-                animation.addByPrefix('idle', config.note, config.framerate, false);
+                animation.addByPrefix('idle', config.note, config.frameRate, false);
             case 'sustain':
                 animation.addByPrefix('idle', config.sustain, config.frameRate, false);
             case 'end':
@@ -67,12 +69,5 @@ class ALENote extends scripting.haxe.ScriptSprite
             textureShader.g = CoolUtil.colorFromString(config.shader[1]);
             textureShader.b = CoolUtil.colorFromString(config.shader[2]);
         }
-    }
-
-    override function update(elapsed:Float)
-    {
-        super.update(elapsed);
-
-        
     }
 }

@@ -5,7 +5,9 @@ import funkin.visuals.shaders.RGBShaderReference;
 
 import flixel.input.keyboard.FlxKey;
 
-//import core.structures.ALEStrum;
+/*
+import core.structures.ALEStrum;
+*/
 
 class Strum extends scripting.haxe.ScriptSprite
 {
@@ -22,7 +24,7 @@ class Strum extends scripting.haxe.ScriptSprite
     public var returnToIdle:Bool = false;
     public var returnToIdleTime:Float = 0.125;
 
-    public function new(config:ALEStrum, data:Int, input:FlxKey, skins:Array<String>, scale:Float, space:Float)
+    public function new(config:ALEStrum, data:Int, input:Array<FlxKey>, skins:Array<String>, scale:Float, space:Float)
     {
         super();
 
@@ -32,7 +34,7 @@ class Strum extends scripting.haxe.ScriptSprite
 
         frames = Paths.getMultiAtlas([for (skin in skins) 'noteSkins/' + skin]);
 
-        animation.addByPrefix('idle', config.idle, config.framerate, false);
+        animation.addByPrefix('idle', config.idle, config.frameRate, false);
         animation.addByPrefix('hit', config.hit, config.frameRate, false);
         animation.addByPrefix('pressed', config.pressed, config.frameRate, false);
 

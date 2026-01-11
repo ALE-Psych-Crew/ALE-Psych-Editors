@@ -2,11 +2,11 @@ package core.structures;
 
 import core.enums.CharacterType;
 
-typedef ALESongStrumline = {
+typedef ALESongStrumLine = {
     var file:String;
     var position:Point;
     var rightToLeft:Bool;
-    var visible:Float;
+    var visible:Bool;
     var characters:Array<String>;
     var type:CharacterType;
 };
