@@ -3,9 +3,10 @@ package funkin.visuals.game;
 import utils.ALEFormatter;
 
 import funkin.visuals.game.Strum;
-import funkin.visuals.game.ALENote;
+import funkin.visuals.game.ALENote as Note;
 
 import flixel.input.keyboard.FlxKey;
+import flixel.util.FlxSort;
 
 import core.enums.CharacterType;
 
@@ -63,10 +64,20 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         add(notes = new FlxTypedSpriteGroup<Note>());
 
         for (note in arrayNotes)
-            notesToSpawn.unshift(new ALENote(config.strums[note[1]], strums.members[note[1]], note[0], note[1], note[2], note[3], 'note', config.space, config.scale, config.textures));
+            notesToSpawn.push(new Note(config.strums[note[1]], strums.members[note[1]], note[0], note[1], note[2], note[3], 'note', config.space, config.scale, config.textures));
+        
+        notesToSpawn.sort(
+            function(a:Note, b:Note)
+            {
+                if (a.time == b.time)
+                    return 0;
+
+                return a.time > b.time ? -1 : 1;
+            }
+        );
     }
 
-    public var spawnTime:Float = 3000;
+    public var spawnTime:Float = 5000;
 
     public var missTime:Float = 175;
 
@@ -74,30 +85,57 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
     {
         super.update(elapsed);
 
-        while (notesToSpawn.length > 0 && notesToSpawn[notesToSpawn.length - 1].time <= Conductor.songPosition + spawnTime)
+        final songPosition:Float = Conductor.songPosition;
+
+        final speedMult:Float = (ClientPrefs.data.downScroll ? -0.45 : 0.45);
+
+        while (notesToSpawn.length > 0 && notesToSpawn[notesToSpawn.length - 1].time <= songPosition + Math.max(spawnTime / scrollSpeed, spawnTime))
             notes.add(notesToSpawn.pop());
+
+        final hitData:Array<Bool> = [];
+
+        final keyPressed:Array<Bool> = [];
+
+        for (index => strum in strums.members)
+            keyPressed[index] = FlxG.keys.anyJustPressed(strum.input);
 
         for (note in notes)
         {
-            var timeDiff:Float = note.time - Conductor.songPosition;
+            if (note == null)
+                continue;
 
-            note.y = this.y + timeDiff * (ClientPrefs.data.downScroll ? -0.45 : 0.45) * scrollSpeed;
+            final timeDiff:Float = note.time - songPosition;
 
-            if (timeDiff <= 0)
+            note.y = this.y + timeDiff * speedMult * scrollSpeed;
+
+            if (hitData[note.data])
+                continue;
+
+            if (botplay)
             {
-                if (botplay)
+                if (timeDiff <= 0)
                     hitNote(note);
-                else if (!note.isOnScreen())
+            } else {
+                if (Math.abs(timeDiff) <= 180)
+                {
+                    if (keyPressed[note.data])
+                    {
+                        hitNote(note);
+
+                        hitData[note.data] = true;
+                    }
+                } else if (timeDiff < 0) {
                     removeNote(note);
+                }
             }
         }
 
         if (botplay)
             return;
 
-        for (strum in strums)
+        for (index => strum in strums.members)
         {
-            if (FlxG.keys.anyJustPressed(strum.input))
+            if (!hitData[index] && keyPressed[index])
                 strum.playAnim('pressed');
 
             if (FlxG.keys.anyJustReleased(strum.input))
@@ -105,15 +143,15 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         }
     }
 
-    public function hitNote(note:ALENote)
+    public function hitNote(note:Note)
     {
         note.strum.playAnim('hit');
 
         removeNote(note);
     }
 
-    public function removeNote(note:ALENote)
+    public function removeNote(note:Note)
     {
-        notes.remove(note, true);
+        notes.remove(note);
     }
 }
