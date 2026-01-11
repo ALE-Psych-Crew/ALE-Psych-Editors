@@ -68,4 +68,11 @@ class ALENote extends scripting.haxe.ScriptSprite
             textureShader.b = CoolUtil.colorFromString(config.shader[2]);
         }
     }
+
+    override function update(elapsed:Float)
+    {
+        super.update(elapsed);
+
+        
+    }
 }

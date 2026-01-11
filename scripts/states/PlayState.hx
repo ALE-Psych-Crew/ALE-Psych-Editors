@@ -66,7 +66,7 @@ function onHotReloadingConfig()
         addHotReloadingFile('scripts/classes/' + file.replace('.', '/') + '.hx');
 }
 
-if (false)
+if (true)
 {
     final window:Window = Application.current.window;
 

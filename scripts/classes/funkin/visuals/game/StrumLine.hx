@@ -145,9 +145,27 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
     public function hitNote(note:Note)
     {
+        final rating:Rating = judgeNote(Math.abs(note.time - Conductor.songPosition));
+
+        debugTrace(rating);
+
         note.strum.playAnim('hit');
 
         removeNote(note);
+    }
+
+    public function judgeNote(time:Float):Rating
+    {
+        if (time < 45)
+            return 'sick';
+
+        if (time < 90)
+            return 'good';
+
+        if (time < 135)
+            return 'bad';
+
+        return 'shit';
     }
 
     public function removeNote(note:Note)
