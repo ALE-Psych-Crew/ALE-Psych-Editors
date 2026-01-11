@@ -87,9 +87,9 @@ final difficulty:String;
 
 function new(?mySong:String, ?myDifficulty:String)
 {
-    song = mySong ?? 'monster';
+    song = mySong ?? 'milf';
 
-    difficulty = myDifficulty ?? 'normal';
+    difficulty = myDifficulty ?? 'hard';
 
     FlxG.sound.playMusic(Paths.voices('songs/' + song));
 
@@ -354,61 +354,59 @@ function saveChart()
     };
 
     for (index => section in sections)
-    {
         chart.sections[index] = {
             notes: [],
             camera: section.camera,
             bpm: section.bpm,
             changeBPM: section.changeBPM
         };
-    }
 
     for (grid in grids)
     {
-        if (grid != null)
+        if (grid == null)
+            continue;
+            
+        if (strlIndexMap.exists(grid.configID))
         {
-            if (strlIndexMap.exists(grid.configID))
-            {
-                chart.strumLines[strlIndexMap.get(grid.configID)].characters[grid.charIndex] = grid.character;
-            } else {
-                strlIndexMap.set(grid.configID, chart.strumLines.length);
+            chart.strumLines[strlIndexMap.get(grid.configID)].characters[grid.charIndex] = grid.character;
+        } else {
+            strlIndexMap.set(grid.configID, chart.strumLines.length);
 
-                chart.strumLines.push(
-                    {
-                        file: grid.configID.split('::')[0],
-                        position: grid.position,
-                        rightToLeft: grid.rightToLeft,
-                        visible: grid.visibleStrumline,
-                        characters: [grid.character]
-                    }
-                );
-            }
+            chart.strumLines.push(
+                {
+                    file: grid.configID.split('::')[0],
+                    position: grid.position,
+                    rightToLeft: grid.rightToLeft,
+                    visible: grid.visibleStrumline,
+                    characters: [grid.character]
+                }
+            );
+        }
 
-            for (index => section in grid.sections)
+        for (index => section in grid.sections)
+        {
+            if (section == null)
+                continue;
+
+            chart.sections[index] ??= {
+                notes: [],
+                camera: [0, 0],
+                bpm: loadedSong.bpm,
+                changeBPM: false
+            };
+
+            for (note in section)
             {
-                if (section == null)
+                if (note == null)
                     continue;
 
-                chart.sections[index] ??= {
-                    notes: [],
-                    camera: [0, 0],
-                    bpm: loadedSong.bpm,
-                    changeBPM: false
-                };
-
-                for (note in section)
-                {
-                    if (note == null)
-                        continue;
-
-                    chart.sections[index].notes.push([
-                        note.time,
-                        note.data,
-                        note.length,
-                        note.type,
-                        [strlIndexMap.get(grid.configID), grid.charIndex]
-                    ]);
-                }
+                chart.sections[index].notes.push([
+                    note.time,
+                    note.data,
+                    note.length,
+                    note.type,
+                    [strlIndexMap.get(grid.configID), grid.charIndex]
+                ]);
             }
         }
     }

@@ -282,8 +282,6 @@ class ChartGrid extends ScriptSpriteGroup
 
         sections[Conductor.curSection][note.index] = null;
 
-        debugTrace(sections[Conductor.curSection]);
-
         notes.group.members.remove(note);
 
         notePool.push(note);
