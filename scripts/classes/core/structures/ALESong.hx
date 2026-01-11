@@ -5,4 +5,6 @@ typedef ALESong = {
     var sections:Array<ALESongSection>;
     var format:String;
     var bpm:Float;
+    var stepsPerBeat:Int;
+    var beatsPerSection:Int;
 }

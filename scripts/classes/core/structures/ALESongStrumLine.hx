@@ -4,6 +4,6 @@ typedef ALESongStrumline = {
     var file:String;
     var position:Point;
     var rightToLeft:Bool;
-    var alpha:Float;
-    var character:String;
+    var visible:Float;
+    var characters:Array<String>;
 };

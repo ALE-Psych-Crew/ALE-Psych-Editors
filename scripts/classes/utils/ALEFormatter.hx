@@ -8,6 +8,8 @@ import utils.cool.FileUtil;
 
 class ALEFormatter
 {
+    public static final FORMAT:String = 'ale-format-v0.1';
+
     public static function getSong(name:String, difficulty:String):ALESong
     {
         final path:String = 'songs/' + name + '/charts/' + difficulty + '.json';
@@ -18,7 +20,7 @@ class ALEFormatter
 
         var result:ALESong = null;
 
-        if (json.format == 'ale-format-v0.1')
+        if (json.format == FORMAT)
             result = cast json;
 
         if (result == null)
@@ -36,14 +38,16 @@ class ALEFormatter
                                 y: 50
                             },
                             rightToLeft: i == 0,
-                            alpha: i != 2,
-                            character: [json.player2, json.player1, json.gfVersion][i]
+                            visible: i != 2,
+                            characters: [[json.player2, json.player1, json.gfVersion][i]]
                         }
                     }
                 ],
                 sections: [],
                 bpm: json.bpm,
-                format: 'ale-format-v0.1'
+                format: FORMAT,
+                stepsPerBeat: 4,
+                beatsPerSection: 4
             };
 
             for (section in json.notes)
@@ -65,7 +69,8 @@ class ALEFormatter
                             note[1] % 4,
                             note[2],
                             note[3] ?? '',
-                            note[3] == 'GF Sing' || section.gfSection && note[1] < 4 ? 2 : (section.mustHitSection && note[1] < 4) || (!section.mustHitSection && note[1] > 3) ? 1 : 0
+                            note[3] == 'GF Sing' || section.gfSection && note[1] < 4 ? 2 : (section.mustHitSection && note[1] < 4) || (!section.mustHitSection && note[1] > 3) ? 1 : 0,
+                            0
                         ]);
                     }
                 }

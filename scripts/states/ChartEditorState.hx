@@ -1,3 +1,5 @@
+import haxe.ds.StringMap;
+
 import lime.app.Application;
 
 import utils.cool.PlayStateUtil;
@@ -59,8 +61,6 @@ function calculateBPMChanges(?song:Null<ALESong>)
 
 final NOTE_SIZE:Int = 50;
 
-final SONG:String = 'Satin-Panties';
-
 final LINE_POS:Int = 200;
 
 final CHARACTERS_MAP:StringMap<String> = new StringMap();
@@ -78,36 +78,54 @@ var grids:FlxTypedGroup<ChartGrid>;
 
 var conductorInfo:FlxText;
 
-var _song:ALESong;
+var loadedSong:ALESong;
+
+var sections:Array<ChartSection> = [];
+
+function new(?song:String)
+{
+    song ??= 'monster';
+
+    FlxG.sound.playMusic(Paths.voices('songs/' + song));
+
+    music.pause();
+
+    loadedSong = ALEFormatter.getSong(song, 'hard');
+}
 
 function postCreate()
 {
     Conductor.songPosition = 0;
-
-    FlxG.sound.playMusic(Paths.voices('songs/' + SONG));
-
-    music.pause();
 
     bg = FlxGradient.createGradientFlxSprite(FlxG.width, FlxG.height, [FlxColor.BLACK, ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -50)]);
     bg.scrollFactor.set();
 
     add(bg);
 
-    _song = ALEFormatter.getSong(SONG, 'hard');
+    Conductor.stepsPerBeat = loadedSong.stepsPerBeat;
+    Conductor.beatsPerSection = loadedSong.beatsPerSection;
 
-    calculateBPMChanges(_song);
+    calculateBPMChanges(loadedSong);
 
     grids = new FlxTypedGroup<ChartGrid>();
     add(grids);
 
-    for (strl in _song.strumLines)
-    {
-        final grid:ChartGrid = addGrid(strl.file);
+    var gridMap:Array<Array<ChartGrid>> = [];
 
-        grid.setCharacter(strl.character);
+    for (index => strl in loadedSong.strumLines)
+    {
+        gridMap[index] ??= [];
+
+        for (character in strl.characters)
+        {
+            final grid:ChartGrid = addGrid(strl.file);
+            grid.setCharacter(character);
+            
+            gridMap[index].push(grid);
+        }
     }
 
-    var timedNotes:Array<Array<Float>> = [for (i in 0..._song.sections.length) []];
+    var timedNotes:Array<Array<Float>> = [for (i in 0...loadedSong.sections.length) []];
 
     var noteIndex:Int = -1;
 
@@ -115,7 +133,7 @@ function postCreate()
 
     var noteSection:Int = 0;
 
-    for (section in _song.sections)
+    for (section in loadedSong.sections)
     {
         for (note in section.notes)
         {
@@ -141,15 +159,15 @@ function postCreate()
         }
     }
 
-    Conductor.bpm = _song.bpm;
+    Conductor.bpm = loadedSong.bpm;
 
     for (sectionIndex => section in timedNotes)
     {
         for (note in section)
         {
-            grids.members[note[4]].sections[sectionIndex] ??= [];
+            gridMap[note[4]][note[5]].sections[sectionIndex] ??= [];
 
-            grids.members[note[4]].sections[sectionIndex].push(
+            gridMap[note[4]][note[5]].sections[sectionIndex].push(
                 {
                     time: note[0],
                     data: note[1],
@@ -177,6 +195,8 @@ function postCreate()
 
     conductorTab.x = FlxG.width - conductorTab.width - 40;
     conductorTab.y = FlxG.height - conductorTab.height - 20;
+
+    saveChart();
 }
 
 final GRID_SPACE:Int = 25;
@@ -214,6 +234,26 @@ function onUpdate(elapsed:Float)
     updateMusicControls();
 
     updateCamera();
+    
+    updateShortcuts();
+
+    setTarget();
+}
+
+function updateShortcuts()
+{
+    if (Controls.CONTROL)
+    {
+        if (FlxG.keys.justPressed.S)
+        {
+            saveChart();
+        }
+    }
+}
+
+function setTarget()
+{
+    
 }
 
 var musicY(get, never):Float;
@@ -250,7 +290,7 @@ function get_CURRENT_SECTION():SwagSection
 
 function updateMusicControls()
 {
-    if (Controls.UI_LEFT_P || Controls.UI_RIGHT_P || Controls.UI_UP || Controls.UI_DOWN || ((!Controls.SHIFT && !Controls.CONTROL) && Controls.MOUSE_WHEEL))
+    if ((Controls.UI_LEFT_P || Controls.UI_RIGHT_P || Controls.UI_UP || Controls.UI_DOWN || Controls.MOUSE_WHEEL) && !Controls.SHIFT && !Controls.CONTROL)
     {
         if (Controls.UI_UP || Controls.UI_DOWN)
             music.time += MUSIC_CHANGE * (Controls.UI_UP ? -1 : 1);
@@ -287,6 +327,27 @@ function updateCamera()
     camGame.zoom = CoolUtil.fpsLerp(camGame.zoom, camData.zoom, 0.25);
 
     bg.scale.x = bg.scale.y = CoolUtil.fpsLerp(bg.scale.x, 1 / camData.zoom, 0.25);
+}
+
+function saveChart()
+{
+    final chart:ALESong = {
+        strumLines: [],
+        sections: [],
+        beatsPerSection: loadedSong.beatsPerSection,
+        stepsPerBeat: loadedSong.stepsPerBeat,
+        format: ALEFormatter.FORMAT,
+        bpm: loadedSong.bpm
+    };
+
+    for (grid in grids)
+    {
+        if (grid != null)
+        {
+            debugTrace(grid.character);
+            debugTrace(grid.configID);
+        }
+    }
 }
 
 // ----------- ADRIANA SALTE -----------
