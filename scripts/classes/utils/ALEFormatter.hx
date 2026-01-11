@@ -45,6 +45,7 @@ class ALEFormatter
                     }
                 ],
                 sections: [],
+                speed: json.speed,
                 bpm: json.bpm,
                 format: FORMAT,
                 stepsPerBeat: 4,

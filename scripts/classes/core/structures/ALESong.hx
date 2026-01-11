@@ -7,4 +7,5 @@ typedef ALESong = {
     var bpm:Float;
     var stepsPerBeat:Int;
     var beatsPerSection:Int;
+    var speed:Float;
 }

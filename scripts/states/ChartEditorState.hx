@@ -350,6 +350,7 @@ function saveChart()
         beatsPerSection: loadedSong.beatsPerSection,
         stepsPerBeat: loadedSong.stepsPerBeat,
         format: ALEFormatter.FORMAT,
+        speed: loadedSong.speed,
         bpm: loadedSong.bpm
     };
 

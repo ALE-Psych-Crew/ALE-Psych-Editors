@@ -1,11 +1,11 @@
 {
-    "position": [
-        92,
-        50
-    ],
+    "position": {
+        "x": 92,
+        "y": 50
+    },
     "scale": 0.7,
     "space": 112,
-    "framerate": 24,
+    "framerate": 12,
     "textures": [
         "NOTE_assets"
     ],
