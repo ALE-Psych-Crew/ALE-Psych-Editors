@@ -3,6 +3,7 @@ package funkin.visuals.game;
 import utils.ALEFormatter;
 
 import funkin.visuals.game.Strum;
+import funkin.visuals.game.Splash;
 import funkin.visuals.game.ALENote as Note;
 
 import flixel.input.keyboard.FlxKey;
@@ -20,6 +21,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 {
     public var strums:FlxTypedSpriteGroup<Strum>;
     public var notes:FlxTypedSpriteGroup<Note>;
+    public var splashes:FlxTypedSpriteGroup<Splash>;
 
     public var botplay:Bool;
 
@@ -42,6 +44,10 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         botplay = chartData.type != 'player';
 
         add(strums = new FlxTypedSpriteGroup<Strum>());
+        
+        add(notes = new FlxTypedSpriteGroup<Note>());
+
+        add(splashes = new FlxTypedSpriteGroup<Splash>());
 
         var inputs = ClientPrefs.controls.notes;
 
@@ -51,20 +57,21 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
         for (strumIndex => strumConfig in config.strums)
         {
-            final strum:Strum = new Strum(strumConfig, strumIndex, inputsArray[strumIndex], config.textures, config.scale, config.space);
+            final strum:Strum = new Strum(strumConfig, strumIndex, inputsArray[strumIndex], config.strumFramerate, config.strumTextures, config.strumScale, config.space);
             strums.add(strum);
             strum.returnToIdle = botplay;
+
+            final splash:Splash = new Splash(strumConfig, strum, config.splashScale, config.splashFramerate, config.splashTextures);
+            splashes.add(splash);
 
             strumHeight = Math.max(strumHeight, strum.height);
         }
 
         x = chartData.rightToLeft ? config.position.x : FlxG.width - config.position.x - (config.strums.length - 1) * config.space - strums.members[strums.members.length - 1].width;
         y = ClientPrefs.data.downScroll ? FlxG.height - config.position.y - strumHeight : config.position.y;
-        
-        add(notes = new FlxTypedSpriteGroup<Note>());
 
         for (note in arrayNotes)
-            notesToSpawn.push(new Note(config.strums[note[1]], note[0], note[1], note[2], note[3], 'note', config.space, config.scale, config.textures));
+            notesToSpawn.push(new Note(config.strums[note[1]], note[0], note[1], note[2], note[3], 'note', config.space, config.noteScale, config.noteTextures));
         
         notesToSpawn.sort(
             function(a:Note, b:Note)
@@ -162,7 +169,10 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
     public function hitNote(note:Note)
     {
-        final rating:Rating = judgeNote(Math.abs(note.time - Conductor.songPosition));
+        final rating:Rating = judgeNote(note.timeDistance);
+
+        if (rating == 'sick' && !botplay)
+            splashes.members[note.data].splash();
 
         strums.members[note.data].playAnim('hit');
 
@@ -171,6 +181,8 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
     public function judgeNote(time:Float):Rating
     {
+        time = Math.abs(time);
+
         if (time < 45)
             return 'sick';
 

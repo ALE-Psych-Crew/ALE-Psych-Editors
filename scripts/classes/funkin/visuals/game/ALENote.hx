@@ -42,11 +42,11 @@ class ALENote extends scripting.haxe.ScriptSprite
         switch (type)
         {
             case 'note':
-                animation.addByPrefix('idle', config.note, config.frameRate, false);
+                animation.addByPrefix('idle', config.note, 0, false);
             case 'sustain':
-                animation.addByPrefix('idle', config.sustain, config.frameRate, false);
+                animation.addByPrefix('idle', config.sustain, 0, false);
             case 'end':
-                animation.addByPrefix('idle', config.end, config.frameRate, false);
+                animation.addByPrefix('idle', config.end, 0, false);
         }
 
         animation.play('idle');

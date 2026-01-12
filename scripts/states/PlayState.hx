@@ -71,7 +71,7 @@ function onUpdate(elapsed:Float)
 
 function onHotReloadingConfig()
 {
-    for (file in ['utils.ALEFormatter', 'funkin.visuals.game.StrumLine', 'funkin.visuals.game.Strum', 'funkin.visuals.game.ALENote'])
+    for (file in ['utils.ALEFormatter', 'funkin.visuals.game.StrumLine', 'funkin.visuals.game.Strum', 'funkin.visuals.game.Splash', 'funkin.visuals.game.ALENote'])
         addHotReloadingFile('scripts/classes/' + file.replace('.', '/') + '.hx');
 }
 
