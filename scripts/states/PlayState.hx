@@ -16,9 +16,9 @@ var instSound:openfl.media.Sound;
 
 function new(?song:String, ?difficulty:String)
 {
-    SONG ??= ALEFormatter.getSong(song ?? 'fresh', difficulty ?? 'hard');
+    SONG ??= ALEFormatter.getSong(song ?? 'bopeebo', difficulty ?? 'hard');
 
-    instSound = Paths.voices('songs/' + (song ?? 'fresh'));
+    instSound = Paths.voices('songs/' + (song ?? 'bopeebo'));
 }
 
 function postCreate()
@@ -114,7 +114,7 @@ function onHotReloadingConfig()
             addHotReloadingFile('scripts/classes/' + pack.replace('.', '/') + '/' + file);
 }
 
-if (false)
+if (true)
 {
     final window:Window = Application.current.window;
 

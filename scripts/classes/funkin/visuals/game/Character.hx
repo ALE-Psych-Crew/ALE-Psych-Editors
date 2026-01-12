@@ -21,7 +21,7 @@ class Character extends FunkinSprite
         change(initial);
     }
 
-    var data:ALECharacter;
+    public var data:ALECharacter;
 
     public function change(id:String, ?type:CharacterType)
     {
@@ -66,9 +66,10 @@ class Character extends FunkinSprite
             danceTimer -= elapsed;
     }
 
-    public function sing(anim:String, ?applyTimer:Bool, ?force:Bool)
+    public function sing(?anim:String, ?applyTimer:Bool, ?force:Bool)
     {
-        playAnim(anim, force);
+        if (anim != null)
+            playAnim(anim, force);
 
         if (applyTimer ?? true)
             danceTimer = data.animationLength / 10;

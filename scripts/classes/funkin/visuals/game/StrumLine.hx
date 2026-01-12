@@ -245,7 +245,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
         note.hit = true;
 
-        note.character.sing(note.singAnimation);
+        note.character.sing(note.type != 'note' && !note.character.data.sustainAnimation ? null : note.singAnimation);
 
         if (note.type == 'note' && rating == 'sick' && !botplay)
             splashes.members[note.data].splash();
@@ -275,7 +275,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
     {
         note.miss = true;
 
-        note.character.sing(note.missAnimation);
+        note.character.sing(note.type != 'note' && !note.character.data.sustainAnimation ? null : note.missAnimation);
     }
 
     public function removeNote(note:Note)

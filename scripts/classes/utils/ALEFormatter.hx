@@ -180,8 +180,8 @@ class ALEFormatter
             antialiasing: !psychJson.no_antialiasing,
             barColor: StringTools.hex(CoolUtil.colorFromArray(psychJson.healthbar_colors)),
             death: psychJson.deadVariant ?? 'bf-dead',
-            sustainAnimation: true,
-            danceModulo: char.contains('gf') ? 1 : 2,
+            sustainAnimation: false,
+            danceModulo: char.contains('gf') && !char.contains('bf') ? 1 : 2,
             format: CHARACTER_FORMAT
         };
 
