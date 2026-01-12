@@ -9,7 +9,7 @@ import flixel.input.keyboard.FlxKey;
 import core.structures.ALEStrum;
 */
 
-class Strum extends scripting.haxe.ScriptSprite
+class ALEStrum extends scripting.haxe.ScriptSprite
 {
     public var textureShader:RGBShaderReference;
 

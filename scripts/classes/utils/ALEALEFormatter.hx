@@ -14,7 +14,7 @@ import utils.cool.FileUtil;
 
 typedef ALECharacter = Dynamic;
 
-class ALEFormatter
+class ALEALEFormatter
 {
     public static final FORMAT:String = 'ale-format-v0.1';
 

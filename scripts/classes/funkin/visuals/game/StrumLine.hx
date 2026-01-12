@@ -4,7 +4,7 @@ import utils.ALEFormatter;
 
 import funkin.visuals.game.Strum;
 import funkin.visuals.game.Splash;
-import funkin.visuals.game.ALENote as Note;
+import funkin.visuals.game.Note;
 
 import flixel.input.keyboard.FlxKey;
 import flixel.util.FlxSort;
@@ -117,9 +117,9 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         super.destroy();
     }
 
-    public var spawnTime:Float = 5000;
+    public var spawnTime:Float = 2000;
 
-    public var missTime:Float = 175;
+    public var missTime:Float = 180;
 
     var keyJustPressed:Array<Bool> = [];
     var keyJustReleased:Array<Bool> = [];
@@ -130,7 +130,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
         final songPosition:Float = Conductor.songPosition;
 
-        while (unspawnNotes.length > 0 && unspawnNotes[unspawnNotes.length - 1].time <= songPosition + Math.max(spawnTime / scrollSpeed, spawnTime))
+        while (unspawnNotes.length > 0 && unspawnNotes[unspawnNotes.length - 1].time <= songPosition + spawnTime / scrollSpeed)
             notes.add(unspawnNotes.pop());
 
         notes.forEachAlive(
@@ -144,7 +144,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
                     if (note.timeDistance <= 0)
                         hitNote(note);
                 } else {
-                    if (Math.abs(note.timeDistance) <= 180)
+                    if (Math.abs(note.timeDistance) <= missTime)
                     {
                         if (keyJustPressed[note.data])
                         {

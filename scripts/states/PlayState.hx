@@ -14,9 +14,9 @@ var instSound:openfl.media.Sound;
 
 function new(?song:String, ?difficulty:String)
 {
-    SONG ??= ALEFormatter.getSong(song ?? 'fresh', difficulty ?? 'hard');
+    SONG ??= ALEFormatter.getSong(song ?? 'milf', difficulty ?? 'hard');
 
-    instSound = Paths.voices('songs/' + (song ?? 'fresh'));
+    instSound = Paths.voices('songs/' + (song ?? 'milf'));
 }
 
 function onCreate()
@@ -57,6 +57,7 @@ function initStrumLines()
 
     strumLines = new FlxTypedGroup<StrumLine>();
     add(strumLines);
+    strumLines.cameras = [camHUD];
 
     for (strlIndex => strl in SONG.strumLines)
         strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed));
@@ -66,6 +67,8 @@ function onUpdate(elapsed:Float)
 {
     Conductor.songPosition = FlxG.sound.music.time;
 }
+
+camGame.zoom = 0.08;
 
 // ------- ADRIANA SALTE -------
 
