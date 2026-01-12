@@ -24,6 +24,8 @@ class Strum extends scripting.haxe.ScriptSprite
     public var returnToIdle:Bool = false;
     public var returnToIdleTime:Float = 0.125;
 
+    public var direction:Float = 0;
+
     public function new(config:ALEStrum, data:Int, input:Array<FlxKey>, skins:Array<String>, scale:Float, space:Float)
     {
         super();

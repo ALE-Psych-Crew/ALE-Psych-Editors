@@ -64,7 +64,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         add(notes = new FlxTypedSpriteGroup<Note>());
 
         for (note in arrayNotes)
-            notesToSpawn.push(new Note(config.strums[note[1]], strums.members[note[1]], note[0], note[1], note[2], note[3], 'note', config.space, config.scale, config.textures));
+            notesToSpawn.push(new Note(config.strums[note[1]], note[0], note[1], note[2], note[3], 'note', config.space, config.scale, config.textures));
         
         notesToSpawn.sort(
             function(a:Note, b:Note)
@@ -80,8 +80,6 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
     public var spawnTime:Float = 5000;
 
     public var missTime:Float = 175;
-
-    public final speedMult:Float = ClientPrefs.data.downScroll ? -0.45 : 0.45;
 
     var hitData:Array<Bool> = [];
 
@@ -109,36 +107,34 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
         deleteNotes.resize(0);
 
-        for (note in notes)
-        {
-            if (note == null)
-                continue;
+        notes.forEachAlive(
+            (note) -> {
+                final strum:Strum = strums.members[note.data];
+                
+                note.followStrum(strum, Conductor.stepCrochet, scrollSpeed);
 
-            final timeDiff:Float = note.time - songPosition;
+                if (hitData[note.data])
+                    return;
 
-            note.y = this.y + timeDiff * speedMult * scrollSpeed;
-
-            if (hitData[note.data])
-                continue;
-
-            if (botplay)
-            {
-                if (timeDiff <= 0)
-                    hitNotes.push(note);
-            } else {
-                if (Math.abs(timeDiff) <= 180)
+                if (botplay)
                 {
-                    if (keyPressed[note.data])
-                    {
+                    if (note.timeDistance <= 0)
                         hitNotes.push(note);
+                } else {
+                    if (Math.abs(note.timeDistance) <= 180)
+                    {
+                        if (keyPressed[note.data])
+                        {
+                            hitNotes.push(note);
 
-                        hitData[note.data] = true;
+                            hitData[note.data] = true;
+                        }
+                    } else if (note.timeDistance < 0) {
+                        deleteNotes.push(note);
                     }
-                } else if (timeDiff < 0) {
-                    deleteNotes.push(note);
                 }
             }
-        }
+        );
 
         for (note in hitNotes)
             hitNote(note);
@@ -149,21 +145,26 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         if (botplay)
             return;
 
-        for (index => strum in strums.members)
-        {
-            if (!hitData[index] && keyPressed[index])
-                strum.playAnim('pressed');
+        var strlIndex:Int = 0;
 
-            if (FlxG.keys.anyJustReleased(strum.input))
-                strum.playAnim('idle');
-        }
+        strums.forEachAlive(
+            (strum) -> {
+                if (!hitData[strlIndex] && keyPressed[strlIndex])
+                    strum.playAnim('pressed');
+
+                if (FlxG.keys.anyJustReleased(strum.input))
+                    strum.playAnim('idle');
+
+                strlIndex++;
+            }
+        );
     }
 
     public function hitNote(note:Note)
     {
         final rating:Rating = judgeNote(Math.abs(note.time - Conductor.songPosition));
 
-        note.strum.playAnim('hit');
+        strums.members[note.data].playAnim('hit');
 
         removeNote(note);
     }
