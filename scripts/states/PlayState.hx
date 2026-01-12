@@ -14,9 +14,9 @@ var instSound:openfl.media.Sound;
 
 function new(?song:String, ?difficulty:String)
 {
-    SONG ??= ALEFormatter.getSong(song ?? 'milf', difficulty ?? 'hard');
+    SONG ??= ALEFormatter.getSong(song ?? 'bopeebo', difficulty ?? 'hard');
 
-    instSound = Paths.voices('songs/' + (song ?? 'milf'));
+    instSound = Paths.voices('songs/' + (song ?? 'bopeebo'));
 }
 
 function onCreate()
@@ -28,6 +28,8 @@ function onCreate()
 
 function loadSong()
 {
+    add(new FlxSprite().makeGraphic(FlxG.width, FlxG.height, FlxColor.fromRGB(50, 50, 50)));
+
     initStrumLines();
 }
 
@@ -37,8 +39,13 @@ function initStrumLines()
 {
     final notes:Array<Array<Dynamic>> = [];
 
+    Conductor.bpm = SONG.bpm;
+
     for (section in SONG.sections)
     {
+        if (section.changeBPM)
+            Conductor.bpm = section.bpm;
+
         for (note in section.notes)
         {
             notes[note[4][0]] ??= [];
@@ -49,11 +56,14 @@ function initStrumLines()
                     note[1],
                     note[2],
                     note[3],
-                    note[4][1]
+                    note[4][1],
+                    Conductor.stepCrochet
                 ]
             );
         }
     }
+
+    Conductor.bpm = SONG.bpm;
 
     strumLines = new FlxTypedGroup<StrumLine>();
     add(strumLines);
@@ -68,13 +78,13 @@ function onUpdate(elapsed:Float)
     Conductor.songPosition = FlxG.sound.music.time;
 }
 
-camGame.zoom = 0.08;
+camGame.zoom = camHUD.zoom = 0.75;
 
 // ------- ADRIANA SALTE -------
 
 function onHotReloadingConfig()
 {
-    for (file in ['utils.ALEFormatter', 'funkin.visuals.game.StrumLine', 'funkin.visuals.game.Strum', 'funkin.visuals.game.Splash', 'funkin.visuals.game.ALENote'])
+    for (file in ['utils.ALEFormatter', 'funkin.visuals.game.StrumLine', 'funkin.visuals.game.Strum', 'funkin.visuals.game.Splash', 'funkin.visuals.game.Note'])
         addHotReloadingFile('scripts/classes/' + file.replace('.', '/') + '.hx');
 }
 

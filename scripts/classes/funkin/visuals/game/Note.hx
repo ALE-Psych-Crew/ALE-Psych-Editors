@@ -24,6 +24,10 @@ class Note extends scripting.haxe.ScriptSprite
     public var length:Float;
     public var noteType:String;
 
+    public var hit:Bool = false;
+
+    public var parent:Note;
+
     public function new(config:ALEStrum, time:Float, data:Int, length:Float, noteType:String, type:NoteType, space:Float, scale:Float, skins:Array<String>)
     {
         super();
@@ -54,6 +58,8 @@ class Note extends scripting.haxe.ScriptSprite
         this.scale.x = this.scale.y = scale;
         
         updateHitbox();
+        centerOrigin();
+        centerOffsets();
 
         x = data * space;
         
