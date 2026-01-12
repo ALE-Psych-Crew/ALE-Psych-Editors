@@ -11,8 +11,6 @@ import core.structures.ALEStrum;
 
 class Strum extends scripting.haxe.ScriptSprite
 {
-    public var input:Array<FlxKey>;
-
     public var textureShader:RGBShaderReference;
 
     public var allowShader:Bool;
@@ -24,7 +22,7 @@ class Strum extends scripting.haxe.ScriptSprite
 
     public var direction:Float = 0;
 
-    public function new(config:ALEStrum, data:Int, input:Array<FlxKey>, framerate:Float, skins:Array<String>, scale:Float, space:Float)
+    public function new(config:ALEStrum, data:Int, framerate:Float, skins:Array<String>, scale:Float, space:Float)
     {
         super();
 
@@ -56,8 +54,6 @@ class Strum extends scripting.haxe.ScriptSprite
         }
 
         textureShader.enabled = false;
-
-        this.input = input;
     }
 
     public var idleTimer:Float = 0;
