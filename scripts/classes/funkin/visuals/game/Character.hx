@@ -72,7 +72,7 @@ class Character extends FunkinSprite
             playAnim(anim, force);
 
         if (applyTimer ?? true)
-            danceTimer = data.animationLength / 10;
+            danceTimer = data.animationLength;
     }
 
     public function dance()

@@ -103,7 +103,7 @@ function onBeatHit(curBeat:Int)
     );
 }
 
-camGame.zoom = camHUD.zoom = 0.75;
+camGame.zoom = camHUD.zoom = 1;
 
 // ------- ADRIANA SALTE -------
 

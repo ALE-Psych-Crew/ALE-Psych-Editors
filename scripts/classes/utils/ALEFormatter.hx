@@ -165,7 +165,7 @@ class ALEFormatter
         var result:ALECharacter = {
             animations: [],
             scale: psychJson.scale,
-            animationLength: psychJson.sing_duration,
+            animationLength: psychJson.sing_duration / 10,
             icon: psychJson.healthicon,
             position: {
                 x: psychJson.position[0],
