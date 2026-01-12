@@ -23,7 +23,9 @@
             "splash": [
                 "note splash purple 1",
                 "note splash purple 2"
-            ]
+            ],
+            "sing": "singLEFT",
+            "miss": "singLEFTmiss"
         },
         {
             "idle": "arrowDOWN",
@@ -40,7 +42,9 @@
             "splash": [
                 "note splash blue 1",
                 "note splash blue 2"
-            ]
+            ],
+            "sing": "singDOWN",
+            "miss": "singDOWNmiss"
         },
         {
             "idle": "arrowUP",
@@ -57,7 +61,9 @@
             "splash": [
                 "note splash green 1",
                 "note splash green 2"
-            ]
+            ],
+            "sing": "singUP",
+            "miss": "singUPmiss"
         },
         {
             "idle": "arrowRIGHT",
@@ -74,7 +80,9 @@
             "splash": [
                 "note splash red 1",
                 "note splash red 2"
-            ]
+            ],
+            "sing": "singRIGHT",
+            "miss": "singRIGHTmiss"
         }
     ],
     "strumFramerate": 24,

@@ -6,6 +6,8 @@ import utils.ALEFormatter;
 
 import funkin.visuals.game.StrumLine;
 
+import funkin.visuals.game.Character;
+
 using StringTools;
 
 var SONG:ALESong;
@@ -14,24 +16,21 @@ var instSound:openfl.media.Sound;
 
 function new(?song:String, ?difficulty:String)
 {
-    SONG ??= ALEFormatter.getSong(song ?? 'bopeebo', difficulty ?? 'hard');
+    SONG ??= ALEFormatter.getSong(song ?? 'fresh', difficulty ?? 'hard');
 
-    instSound = Paths.voices('songs/' + (song ?? 'bopeebo'));
+    instSound = Paths.voices('songs/' + (song ?? 'fresh'));
 }
 
-function onCreate()
+function postCreate()
 {
     FlxG.sound.playMusic(instSound);
+
+    ClientPrefs.data.botplay = false;
 
     loadSong();
 }
 
-function loadSong()
-{
-    add(new FlxSprite().makeGraphic(FlxG.width, FlxG.height, FlxColor.fromRGB(50, 50, 50)));
-
-    initStrumLines();
-}
+var characters:FlxTypedGroup<Character>;
 
 var strumLines:FlxTypedGroup<StrumLine>;
 
@@ -65,17 +64,43 @@ function initStrumLines()
 
     Conductor.bpm = SONG.bpm;
 
-    strumLines = new FlxTypedGroup<StrumLine>();
-    add(strumLines);
+    add(characters = new FlxTypedGroup<Character>());
+
+    add(strumLines = new FlxTypedGroup<StrumLine>());
     strumLines.cameras = [camHUD];
 
     for (strlIndex => strl in SONG.strumLines)
-        strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed));
+    {
+        final strlCharacters:Array<Character> = [];
+
+        for (character in strl.characters)
+            strlCharacters.push(characters.add(new Character(character, strl.type)));
+
+        strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters));
+    }
 }
 
 function onUpdate(elapsed:Float)
 {
     Conductor.songPosition = FlxG.sound.music.time;
+}
+
+function loadSong()
+{
+    add(new FlxSprite().makeGraphic(FlxG.width, FlxG.height, FlxColor.fromRGB(50, 50, 50)));
+
+    initStrumLines();
+
+    Conductor.bpm = SONG.bpm;
+}
+
+function onBeatHit(curBeat:Int)
+{
+    characters.forEachAlive(
+        (char) -> {
+            char.dance();
+        }
+    );
 }
 
 camGame.zoom = camHUD.zoom = 0.75;
@@ -84,11 +109,12 @@ camGame.zoom = camHUD.zoom = 0.75;
 
 function onHotReloadingConfig()
 {
-    for (file in ['utils.ALEFormatter', 'funkin.visuals.game.StrumLine', 'funkin.visuals.game.Strum', 'funkin.visuals.game.Splash', 'funkin.visuals.game.Note'])
-        addHotReloadingFile('scripts/classes/' + file.replace('.', '/') + '.hx');
+    for (pack in ['utils', 'funkin.visuals.game', 'funkin.visuals.objects'])
+        for (file in Paths.readDirectory('scripts/classes/' + pack.replace('.', '/')))
+            addHotReloadingFile('scripts/classes/' + pack.replace('.', '/') + '/' + file);
 }
 
-if (true)
+if (false)
 {
     final window:Window = Application.current.window;
 

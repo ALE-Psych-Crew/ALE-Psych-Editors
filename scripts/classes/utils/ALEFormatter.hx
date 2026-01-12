@@ -6,17 +6,18 @@ import core.structures.ALESongSection;
 import core.structures.ALEStrumLine;
 import core.structures.PsychSong;
 import core.structures.PsychSongSection;
+import core.structures.ALECharacter;
 
 import core.enums.CharacterType;
 */
 
 import utils.cool.FileUtil;
 
-typedef ALECharacter = Dynamic;
+using StringTools;
 
-class ALEALEFormatter
+class ALEFormatter
 {
-    public static final FORMAT:String = 'ale-format-v0.1';
+    public static final CHART_FORMAT:String = 'ale-chart-v0.1';
 
     public static function getSong(name:String, difficulty:String):ALESong
     {
@@ -28,7 +29,7 @@ class ALEALEFormatter
 
         var result:ALESong = null;
 
-        if (json.format == FORMAT)
+        if (json.format == CHART_FORMAT)
             result = cast json;
 
         if (result == null)
@@ -45,17 +46,17 @@ class ALEALEFormatter
                                 x: 92,
                                 y: 50
                             },
-                            rightToLeft: i == 0,
-                            visible: i != 2,
-                            characters: [[psychSong.player2, psychSong.player1, psychSong.gfVersion][i]],
-                            type: cast ['opponent', 'player', 'extra'][i]
+                            rightToLeft: i == 1,
+                            visible: i != 0,
+                            characters: [[psychSong.gfVersion, psychSong.player2, psychSong.player1][i]],
+                            type: cast ['extra', 'opponent', 'player'][i]
                         }
                     }
                 ],
                 sections: [],
                 speed: psychSong.speed,
                 bpm: psychSong.bpm,
-                format: FORMAT,
+                format: CHART_FORMAT,
                 stepsPerBeat: 4,
                 beatsPerSection: 4
             };
@@ -78,7 +79,7 @@ class ALEALEFormatter
                             note[1] % 4,
                             note[2],
                             note[3] == 'GF Sing' && section.gfSection && note[1] < 4 ? '' : (note[3] ?? ''),
-                            [note[3] == 'GF Sing' || section.gfSection && note[1] < 4 ? 2 : (section.mustHitSection && note[1] < 4) || (!section.mustHitSection && note[1] > 3) ? 1 : 0, 0]
+                            [note[3] == 'GF Sing' || section.gfSection && note[1] < 4 ? 0 : (section.mustHitSection && note[1] < 4) || (!section.mustHitSection && note[1] > 3) ? 2 : 1, 0]
                         ];
 
                         curSection.notes.push(arrayNote);
@@ -150,9 +151,54 @@ class ALEALEFormatter
 		return cast json;
     }
     
+    public static final CHARACTER_FORMAT:String = 'ale-character-v0.1';
+
     public static function getCharacter(char:String):ALECharacter
     {
-        return Paths.json('characters/' + char);
+        var json:Dynamic = Paths.json('characters/' + char);
+
+        if (json.format == CHARACTER_FORMAT)
+            return cast json;
+
+        var psychJson:PsychCharacter = cast json;
+
+        var result:ALECharacter = {
+            animations: [],
+            scale: psychJson.scale,
+            animationLength: psychJson.sing_duration,
+            icon: psychJson.healthicon,
+            position: {
+                x: psychJson.position[0],
+                y: psychJson.position[1]
+            },
+            cameraPosition: {
+                x: psychJson.camera_position[0],
+                y: psychJson.camera_position[1]
+            },
+            textures: [for (image in psychJson.image.split(',')) image.trim()],
+            flipX: psychJson.flip_x,
+            antialiasing: !psychJson.no_antialiasing,
+            barColor: StringTools.hex(CoolUtil.colorFromArray(psychJson.healthbar_colors)),
+            death: psychJson.deadVariant ?? 'bf-dead',
+            sustainAnimation: true,
+            danceModulo: char.contains('gf') ? 1 : 2,
+            format: CHARACTER_FORMAT
+        };
+
+        for (anim in psychJson.animations)
+            result.animations.push({
+                prefix: anim.name,
+                animation: anim.anim,
+                framerate: anim.fps,
+                loop: anim.loop,
+                indices: anim.indices,
+                offset: {
+                    x: anim.offsets[0],
+                    y: anim.offsets[1]
+                }
+            });
+
+        return result;
     }
 
     public static function getStrumLine(strl:String):ALEStrumLine

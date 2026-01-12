@@ -26,9 +26,16 @@ class Note extends scripting.haxe.ScriptSprite
 
     public var hit:Bool = false;
 
+    public var miss:Bool = false;
+
     public var parent:Note;
 
-    public function new(config:ALEStrum, time:Float, data:Int, length:Float, noteType:String, type:NoteType, space:Float, scale:Float, skins:Array<String>)
+    public var character:Character;
+
+    public var singAnimation:String;
+    public var missAnimation:String;
+
+    public function new(config:ALEStrum, time:Float, data:Int, length:Float, noteType:String, type:NoteType, space:Float, scale:Float, skins:Array<String>, character:Character)
     {
         super();
 
@@ -40,6 +47,11 @@ class Note extends scripting.haxe.ScriptSprite
         this.data = data;
         this.length = length;
         this.noteType = noteType;
+
+        this.character = character;
+
+        this.singAnimation = config.sing;
+        this.missAnimation = config.miss;
 
         frames = Paths.getMultiAtlas([for (skin in skins) 'noteSkins/' + skin]);
 
