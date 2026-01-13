@@ -114,7 +114,7 @@ function initStrumLines()
             characters.add(character);
         }
 
-        strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters));
+        //strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters));
     }
 }
 
@@ -168,11 +168,20 @@ function initCamera()
 function onUpdate(elapsed:Float)
 {
     Conductor.songPosition = FlxG.sound.music.time;
+    
+    characters.forEachAlive(
+        (char) -> {
+            char.angle += elapsed * 10;
+        }
+    );
 }
 
 function onSectionHit(curSection:Int)
 {
     final songSection:ALESongSection = SONG.sections[curSection];
+
+    if (songSection == null)
+        return;
 
     final character:Character = cameraCharacters[songSection.camera[0]][songSection.camera[1]];
 
@@ -185,6 +194,8 @@ function onBeatHit(curBeat:Int)
     characters.forEachAlive(
         (char) -> {
             char.dance();
+
+            char.sing('sing' + ['LEFT', 'DOWN', 'UP', 'RIGHT'][curBeat % 4]);
         }
     );
 }

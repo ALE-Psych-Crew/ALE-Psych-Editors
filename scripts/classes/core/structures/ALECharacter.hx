@@ -9,6 +9,7 @@ typedef ALECharacter = {
     var cameraPosition:Point;
     var textures:Array<String>;
     var flipX:Bool;
+    var flipY:Bool;
     var antialiasing:Bool;
     var barColor:String;
     var death:String;

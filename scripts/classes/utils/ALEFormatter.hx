@@ -181,6 +181,7 @@ class ALEFormatter
             },
             textures: [for (image in psychJson.image.split(',')) image.trim()],
             flipX: psychJson.flip_x,
+            flipY: false,
             antialiasing: !psychJson.no_antialiasing,
             barColor: StringTools.hex(CoolUtil.colorFromArray(psychJson.healthbar_colors)),
             death: psychJson.deadVariant ?? 'bf-dead',
