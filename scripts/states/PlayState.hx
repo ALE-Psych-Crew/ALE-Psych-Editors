@@ -22,11 +22,11 @@ var instSound:openfl.media.Sound;
 
 function new(?song:String, ?difficulty:String)
 {
-    SONG ??= ALEFormatter.getSong(song ?? 'bopeebo', difficulty ?? 'hard');
+    SONG ??= ALEFormatter.getSong(song ?? 'stress', difficulty ?? 'hard');
 
     STAGE ??= ALEFormatter.getStage(SONG.stage);
 
-    instSound = Paths.voices('songs/' + (song ?? 'bopeebo'));
+    instSound = Paths.voices('songs/' + (song ?? 'stress'));
 }
 
 var camFollow:FlxObject;

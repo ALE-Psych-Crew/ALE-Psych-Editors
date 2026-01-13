@@ -223,6 +223,18 @@ class ALEFormatter
         if (json.format == STAGE_FORMAT)
             return cast json;
 
+        json.camera_speed ??= 1;
+        json.defaultZoom ??= 1;
+        json.isPixelStage ??= false;
+
+        json.boyfriend ??= [0, 0];
+        json.opponent ??= [0, 0];
+        json.girlfriend ??= [0, 0];
+        
+        json.camera_boyfriend ??= [0, 0];
+        json.camera_opponent ??= [0, 0];
+        json.camera_girlfriend ??= [0, 0];
+
         return {
             speed: json.camera_speed,
             zoom: json.defaultZoom,
