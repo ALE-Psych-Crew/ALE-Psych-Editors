@@ -208,7 +208,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
                                 if (notesToHit[note.data] == null || note.timeDistance < notesToHit[note.data].timeDistance)
                                     notesToHit[note.data] = note;
                     } else {
-                        if (note.timeDistance <= 0 && keyPressed[note.data] && note.parent.hit)
+                        if (!note.hit && note.timeDistance <= 0 && keyPressed[note.data] && note.parent.hit)
                             hitNote(note, false);
 
                         if (note.hit && note.clipRect != null && note.clipRect.height <= 0)
