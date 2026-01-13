@@ -30,9 +30,11 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
     public final config:ALEStrumLine;
 
+    public var scrollSpeed:Float = 1;
+
     public var inputsArray:Array<Array<FlxKey>>;
 
-    public var scrollSpeed:Float = 1;
+    public final totalStrums:Int;
 
     public function new(chartData:ALESongStrumLine, arrayNotes:Array<Dynamic>, speed:Float, characters:Array<Character>)
     {
@@ -140,14 +142,29 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
             unspawnNotes.add(note);
         }
+
+        this.totalStrums = strums.members.length;
+
+        for (i in 0...totalStrums)
+        {
+            notesToHit[i] = null;
+            keyPressed[i] = false;
+            keyJustPressed[i] = false;
+            keyJustReleased[i] = false;
+        }
     }
+
+    var notesToHit:Array<Null<Note>> = [];
+    var keyPressed:Array<Bool> = [];
+    var keyJustPressed:Array<Bool> = [];
+    var keyJustReleased:Array<Bool> = [];
 
     public function justPressedKey(key:Int)
     {
         if (botplay)
             return;
 
-        for (i in 0...strums.members.length)
+        for (i in 0...totalStrums)
         {
             if (inputsArray[i].contains(key))
             {
@@ -163,7 +180,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         if (botplay)
             return;
 
-        for (i in 0...strums.members.length)
+        for (i in 0...totalStrums)
         {
             if (inputsArray[i].contains(key))
             {
@@ -174,59 +191,84 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         }
     }
 
-    public var spawnTime:Float = 2000;
-    public var despawnTime:Float = 650;
-    public var missTime:Float = 180;
+    public var spawnWindow:Float = 0;
+    public var despawnWindow:Float = 0;
 
-    var notesToHit:Array<Null<Note>> = [];
-    var keyPressed:Array<String> = [];
-    var keyJustPressed:Array<Bool> = [];
-    var keyJustReleased:Array<Bool> = [];
+    function updateSpawnWindow()
+    {
+        spawnWindow = 2000 / scrollSpeed;
+        despawnWindow = 650 / scrollSpeed;
+    }
+
+    var _lastScrollSpeed:Float = 0;
 
     override public function update(elapsed:Float)
     {
+        if (_lastScrollSpeed != scrollSpeed)
+        {
+            _lastScrollSpeed = scrollSpeed;
+
+            updateSpawnWindow();
+        }
+
         super.update(elapsed);
 
         final songPosition:Float = Conductor.songPosition;
 
-        while (!unspawnNotes.isEmpty() > 0 && unspawnNotes.first().time <= songPosition + spawnTime / scrollSpeed)
+        while (!unspawnNotes.isEmpty() && unspawnNotes.first().time <= songPosition + spawnWindow)
             notes.add(unspawnNotes.pop());
 
-        notes.forEachAlive(
-            (note) -> {
-                final strum:Strum = strums.members[note.data];
+        var noteIndex:Int = 0;
+        
+        while (noteIndex < notes.members.length)
+        {
+            final note:Note = notes.members[noteIndex];
 
-                if (botplay)
-                {
-                    if (!note.hit && note.timeDistance <= 0)
-                        hitNote(note, note.type == 'note');
-                } else {
-                    if (note.type == 'note')
-                    {
-                        if (Math.abs(note.timeDistance) <= missTime)
-                            if (keyJustPressed[note.data])
-                                if (notesToHit[note.data] == null || note.timeDistance < notesToHit[note.data].timeDistance)
-                                    notesToHit[note.data] = note;
-                    } else {
-                        if (!note.hit && note.timeDistance <= 0 && keyPressed[note.data] && note.parent.hit)
-                            hitNote(note, false);
+            if (note == null || !note.exists || !note.alive)
+            {
+                noteIndex++;
 
-                        if (note.hit && note.clipRect != null && note.clipRect.height <= 0)
-                            removeNote(note);
-                    }
-
-                    if (note.timeDistance < -missTime && !note.miss)
-                        missNote(note);
-
-                    if (note.timeDistance < -despawnTime / scrollSpeed)
-                        removeNote(note);
-                }
-                
-                note.followStrum(strum, Conductor.stepCrochet, scrollSpeed);
+                continue;
             }
-        );
 
-        for (data in 0...strums.members.length)
+            final timeDistance:Float = note.timeDistance;
+            final data:Int = note.data;
+
+            final strum:Strum = strums.members[data];
+
+            if (botplay)
+            {
+                if (!note.hit && timeDistance <= 0)
+                    hitNote(note, note.type == 'note');
+            } else {
+                if (note.type == 'note')
+                {
+                    if (Math.abs(timeDistance) <= shitWindow)
+                        if (keyJustPressed[data])
+                            if (notesToHit[data] == null || timeDistance < notesToHit[data].timeDistance)
+                                notesToHit[data] = note;
+                } else {
+                    if (!note.hit && timeDistance <= 0 && keyPressed[data] && note.parent.hit)
+                        hitNote(note, false);
+                }
+
+                if (timeDistance < -shitWindow && !note.miss)
+                    missNote(note);
+
+                if (timeDistance < -despawnWindow)
+                    removeNote(note);
+            }
+
+            if (note.type != 'note' && note.hit && note.clipRect != null && note.clipRect.height <= 0)
+                removeNote(note);
+            
+            if (note.exists)
+                note.followStrum(strum, Conductor.stepCrochet, scrollSpeed);
+
+            noteIndex++;
+        }
+
+        for (data in 0...totalStrums)
         {
             if (notesToHit[data] != null)
             {
@@ -236,25 +278,23 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
                 notesToHit[data] = null;
             }
-        }
-                                
-        strums.forEachAlive(
-            (strum) -> {
-                if (keyJustPressed[strum.data])
-                {
-                    keyJustPressed[strum.data] = false;
+            
+            final strum:Strum = strums.members[data];
 
-                    strum.playAnim('pressed');
-                }
+            if (keyJustPressed[strum.data])
+            {
+                keyJustPressed[strum.data] = false;
 
-                if (keyJustReleased[strum.data])
-                {
-                    keyJustReleased[strum.data] = false;
-
-                    strum.playAnim('idle');
-                }
+                strum.playAnim('pressed');
             }
-        );
+
+            if (keyJustReleased[strum.data])
+            {
+                keyJustReleased[strum.data] = false;
+
+                strum.playAnim('idle');
+            }
+        }
     }
 
     public function hitNote(note:Note, ?remove:Bool)
@@ -274,17 +314,22 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
             removeNote(note);
     }
 
+    public var sickWindow:Int = 45;
+    public var goodWindow:Int = 90;
+    public var badWindow:Int = 135;
+    public var shitWindow:Int = 180;
+
     public function judgeNote(time:Float):Rating
     {
         time = Math.abs(time);
 
-        if (time < 45)
+        if (time < sickWindow)
             return 'sick';
 
-        if (time < 90)
+        if (time < goodWindow)
             return 'good';
 
-        if (time < 135)
+        if (time < badWindow)
             return 'bad';
 
         return 'shit';
@@ -300,7 +345,21 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
     public function removeNote(note:Note)
     {
         note.kill();
-        note.exists = false;
-        notes.remove(note, false);
+        notes.remove(note, true);
+        note.destroy();
+    }
+
+    override function destroy()
+    {
+        while (!unspawnNotes.isEmpty())
+            unspawnNotes.pop().destroy();
+
+        notesToHit = null;
+        keyPressed = null;
+        keyJustReleased = null;
+        keyJustPressed = null;
+        inputsArray = null;
+
+        super.destroy();
     }
 }
