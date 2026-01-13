@@ -1,12 +1,12 @@
 import lime.app.Application;
 
+import flixel.input.keyboard.FlxKey;
 import flixel.math.FlxPoint;
 import flixel.FlxObject;
 
 import utils.ALEFormatter;
 
 import funkin.visuals.game.StrumLine;
-
 import funkin.visuals.game.Character;
 
 //import core.structures.ALESong;
@@ -29,23 +29,17 @@ function new(?song:String, ?difficulty:String)
     instSound = Paths.voices('songs/' + (song ?? 'stress'));
 }
 
-var camFollow:FlxObject;
-
 function postCreate()
 {
-    FlxG.sound.playMusic(instSound);
-
     ClientPrefs.data.botplay = false;
 
     loadSong();
 
-    camFollow = new FlxObject(1, 1, 0, 0);
+    initControls();
 
-    camGame.follow(camFollow);
-
-    camGame.followLerp = 2.5 * STAGE.speed ?? 1;
-
-    camGame.zoom = STAGE.zoom;
+    initCamera();
+    
+    FlxG.sound.playMusic(instSound);
 }
 
 var characters:FlxTypedGroup<Character>;
@@ -124,9 +118,31 @@ function initStrumLines()
     }
 }
 
-function onUpdate(elapsed:Float)
+function initControls()
 {
-    Conductor.songPosition = FlxG.sound.music.time;
+    FlxG.stage.addEventListener('keyDown', justPressedKey);
+    FlxG.stage.addEventListener('keyUp', justReleasedKey);
+}
+
+function justPressedKey(event:KeyboardEvent)
+{
+    if (FlxG.keys.firstJustPressed() <= -1)
+        return;
+
+    strumLines.forEachAlive(
+        (strl) -> {
+            strl.justPressedKey(event.keyCode);
+        }
+    );
+}
+
+function justReleasedKey(event:KeyboardEvent)
+{
+    strumLines.forEachAlive(
+        (strl) -> {
+            strl.justReleasedKey(event.keyCode);
+        }
+    );
 }
 
 function loadSong()
@@ -134,6 +150,24 @@ function loadSong()
     initStrumLines();
 
     Conductor.bpm = SONG.bpm;
+}
+
+var camFollow:FlxObject;
+
+function initCamera()
+{
+    camFollow = new FlxObject(1, 1, 0, 0);
+
+    camGame.follow(camFollow);
+
+    camGame.followLerp = 2.5 * STAGE.speed ?? 1;
+
+    camGame.zoom = STAGE.zoom;
+}
+
+function onUpdate(elapsed:Float)
+{
+    Conductor.songPosition = FlxG.sound.music.time;
 }
 
 function onSectionHit(curSection:Int)
@@ -155,7 +189,11 @@ function onBeatHit(curBeat:Int)
     );
 }
 
-camGame.zoom = camHUD.zoom = 1;
+function onDestroy()
+{
+    FlxG.stage.removeEventListener('keyDown', justPressedKey);
+    FlxG.stage.removeEventListener('keyUp', justReleasedKey);
+}
 
 // ------- ADRIANA SALTE -------
 

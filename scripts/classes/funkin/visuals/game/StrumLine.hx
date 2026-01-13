@@ -8,6 +8,8 @@ import funkin.visuals.game.Note;
 
 import flixel.input.keyboard.FlxKey;
 
+import haxe.ds.GenericStack;
+
 /*
 import core.structures.ALEStrumLine;
 import core.structures.ALESongStrumLine;
@@ -24,7 +26,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
     public var botplay:Bool;
 
-    public var unspawnNotes:Array<Note> = [];
+    public var unspawnNotes:GenericStack<Note> = new GenericStack<Note>();
 
     public final config:ALEStrumLine;
 
@@ -71,6 +73,8 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         x = chartData.rightToLeft ? config.position.x : FlxG.width - config.position.x - (config.strums.length - 1) * config.space - strums.members[strums.members.length - 1].width;
         y = ClientPrefs.data.downScroll ? FlxG.height - config.position.y - strumHeight : config.position.y;
 
+        var tempNotes:Array<Note> = [];
+
         for (note in arrayNotes)
         {
             final time:Float = note[0];
@@ -103,27 +107,29 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
                     sustain.offsetX = strum.width / 2 - sustain.width / 2;
                     sustain.parent = parent;
 
-                    unspawnNotes.unshift(sustain);
+                    tempNotes.push(sustain);
 
                     parent = sustain;
                 }
             }
 
-            unspawnNotes.unshift(note);
+            tempNotes.push(note);
         }
 
-		FlxG.stage.addEventListener('keyDown', this.justPressedKey);
-		FlxG.stage.addEventListener('keyUp', this.justReleasedKey);
+        tempNotes.reverse();
+
+        for (note in tempNotes)
+            unspawnNotes.add(note);
     }
 
-    public function justPressedKey(_:KeyboardEvent)
+    public function justPressedKey(key:Int)
     {
         if (botplay)
             return;
 
         for (i in 0...strums.members.length)
         {
-            if (FlxG.keys.anyJustPressed(inputsArray[i]))
+            if (inputsArray[i].contains(key))
             {
                 keyPressed[i] = true;
 
@@ -132,28 +138,20 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         }
     }
 
-    public function justReleasedKey(_:KeyboardEvent)
+    public function justReleasedKey(key:Int)
     {
         if (botplay)
             return;
 
         for (i in 0...strums.members.length)
         {
-            if (FlxG.keys.anyJustReleased(inputsArray[i]))
+            if (inputsArray[i].contains(key))
             {
                 keyPressed[i] = false;
 
                 keyJustReleased[i] = true;
             }
         }
-    }
-
-    override function destroy()
-    {
-		FlxG.stage.removeEventListener('keyDown', this.justPressedKey);
-		FlxG.stage.removeEventListener('keyUp', this.justReleasedKey);
-
-        super.destroy();
     }
 
     public var spawnTime:Float = 2000;
@@ -171,7 +169,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
         final songPosition:Float = Conductor.songPosition;
 
-        while (unspawnNotes.length > 0 && unspawnNotes[unspawnNotes.length - 1].time <= songPosition + Math.max(spawnTime / scrollSpeed, spawnTime))
+        while (!unspawnNotes.isEmpty() > 0 && unspawnNotes.first().time <= songPosition + Math.max(spawnTime / scrollSpeed, spawnTime))
             notes.add(unspawnNotes.pop());
 
         notes.forEachAlive(
