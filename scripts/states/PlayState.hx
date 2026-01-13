@@ -22,11 +22,11 @@ var instSound:openfl.media.Sound;
 
 function new(?song:String, ?difficulty:String)
 {
-    SONG ??= ALEFormatter.getSong(song ?? 'satin-panties', difficulty ?? 'hard');
+    SONG ??= ALEFormatter.getSong(song ?? 'stress', difficulty ?? 'hard');
 
     STAGE ??= ALEFormatter.getStage(SONG.stage);
 
-    instSound = Paths.voices('songs/' + (song ?? 'satin-panties'));
+    instSound = Paths.voices('songs/' + (song ?? 'stress'));
 }
 
 function postCreate()
@@ -114,7 +114,7 @@ function initStrumLines()
             characters.add(character);
         }
 
-        //strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters));
+        strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters));
     }
 }
 
@@ -168,12 +168,6 @@ function initCamera()
 function onUpdate(elapsed:Float)
 {
     Conductor.songPosition = FlxG.sound.music.time;
-    
-    characters.forEachAlive(
-        (char) -> {
-            char.angle += elapsed * 10;
-        }
-    );
 }
 
 function onSectionHit(curSection:Int)
@@ -194,8 +188,6 @@ function onBeatHit(curBeat:Int)
     characters.forEachAlive(
         (char) -> {
             char.dance();
-
-            char.sing('sing' + ['LEFT', 'DOWN', 'UP', 'RIGHT'][curBeat % 4]);
         }
     );
 }

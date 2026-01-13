@@ -43,7 +43,7 @@ class Character extends FunkinSprite
 
         frames = Paths.getMultiAtlas(data.textures);
 
-        flipX = data.flipX != this.type == 'player';
+        flipX = data.flipX != (this.type == 'player');
 
         flipY = data.flipY;
 

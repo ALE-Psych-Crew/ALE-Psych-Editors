@@ -127,7 +127,12 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         );
 
         for (note in tempNotes)
+        {
+            note.update(0);
+            note.draw();
+
             unspawnNotes.add(note);
+        }
     }
 
     public function justPressedKey(key:Int)
@@ -177,7 +182,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
         final songPosition:Float = Conductor.songPosition;
 
-        while (!unspawnNotes.isEmpty() > 0 && unspawnNotes.first().time <= songPosition + Math.max(spawnTime / scrollSpeed, spawnTime))
+        while (!unspawnNotes.isEmpty() > 0 && unspawnNotes.first().time <= songPosition + spawnTime / scrollSpeed)
             notes.add(unspawnNotes.pop());
 
         notes.forEachAlive(
