@@ -104,10 +104,17 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
                 for (i in 0...(floorLength + 1))
                 {
-                    final sustain:Note = new Note(strumConfig, time + i * crochet, data, 0, type, i == floorLength ? 'end' : 'sustain', space, scale, textures, character);
+                    final sustain:Note = new Note(strumConfig, time + i * crochet, data, crochet, type, i == floorLength ? 'end' : 'sustain', space, scale, textures, character);
                     sustain.offsetY = strum.height / 2;
                     sustain.offsetX = strum.width / 2 - sustain.width / 2;
                     sustain.parent = parent;
+                    sustain.multAlpha = 0.5;
+                    sustain.flipY = ClientPrefs.data.downScroll;
+
+                    if (i != floorLength)
+                        sustain.setGraphicSize(sustain.width, crochet * (speed * 0.45) + 2);
+                    
+                    sustain.updateHitbox();
 
                     tempNotes.push(sustain);
 
@@ -188,13 +195,11 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         notes.forEachAlive(
             (note) -> {
                 final strum:Strum = strums.members[note.data];
-                
-                note.followStrum(strum, Conductor.stepCrochet, scrollSpeed);
 
                 if (botplay)
                 {
-                    if (note.timeDistance <= 0)
-                        hitNote(note);
+                    if (!note.hit && note.timeDistance <= 0)
+                        hitNote(note, note.type == 'note');
                 } else {
                     if (note.type == 'note')
                     {
@@ -204,7 +209,10 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
                                     notesToHit[note.data] = note;
                     } else {
                         if (note.timeDistance <= 0 && keyPressed[note.data] && note.parent.hit)
-                            hitNote(note);
+                            hitNote(note, false);
+
+                        if (note.hit && note.clipRect != null && note.clipRect.height <= 0)
+                            removeNote(note);
                     }
 
                     if (note.timeDistance < -missTime && !note.miss)
@@ -213,6 +221,8 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
                     if (note.timeDistance < -despawnTime / scrollSpeed)
                         removeNote(note);
                 }
+                
+                note.followStrum(strum, Conductor.stepCrochet, scrollSpeed);
             }
         );
 
@@ -247,7 +257,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         );
     }
 
-    public function hitNote(note:Note)
+    public function hitNote(note:Note, ?remove:Bool)
     {
         final rating:Rating = judgeNote(note.timeDistance);
 
@@ -260,7 +270,8 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
         strums.members[note.data].playAnim('hit');
 
-        removeNote(note);
+        if (remove ?? true)
+            removeNote(note);
     }
 
     public function judgeNote(time:Float):Rating

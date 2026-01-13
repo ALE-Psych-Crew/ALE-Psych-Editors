@@ -5,6 +5,8 @@ import funkin.visuals.shaders.RGBShaderReference;
 
 import flixel.math.FlxAngle;
 
+import flixel.math.FlxRect;
+
 /*
 import core.structures.ALEStrum;
 
@@ -89,6 +91,11 @@ class Note extends scripting.haxe.ScriptSprite
         multSpeed = 1;
     }
 
+    override public function update(elapsed:Float)
+    {
+        super.update(elapsed);
+    }
+
     public var multSpeed(default, set):Float;
     function set_multSpeed(value:Float):Float
     {
@@ -155,6 +162,22 @@ class Note extends scripting.haxe.ScriptSprite
             x = strum.x + offsetX + Math.cos(finalDirection) * distance;
 
         if (copyY)
-            y = strum.y + offsetY + Math.sin(finalDirection) * distance;
+            y = strum.y + offsetY + Math.sin(finalDirection) * distance - (ClientPrefs.data.downScroll && type != 'note' ? height : 0);
+        
+        if (type != 'note' && hit)
+        {
+            if (ClientPrefs.data.downScroll)
+            {
+                var clipY:Float = ((y + height) - (strum.y + offsetY)) / scale.y;
+
+                clipRect = FlxRect.get(0, clipY, frameWidth, frameHeight - clipY);
+            } else {
+                var clipY:Float = ((strum.y + offsetY) - y) / scale.y;
+
+                clipRect = FlxRect.get(0, clipY, frameWidth, frameHeight - clipY);
+            }
+        } else {
+            clipRect = null;
+        }
     }
 }
