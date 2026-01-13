@@ -2,11 +2,14 @@ package utils;
 
 /*
 import core.structures.ALESong;
-import core.structures.ALESongSection;
-import core.structures.ALEStrumLine;
 import core.structures.PsychSong;
+import core.structures.ALESongSection;
 import core.structures.PsychSongSection;
+import core.structures.ALEStrumLine;
 import core.structures.ALECharacter;
+import core.structures.PsychCharacter;
+import core.structures.ALEStage;
+import core.structures.PsychStage;
 
 import core.enums.CharacterType;
 */
@@ -58,14 +61,15 @@ class ALEFormatter
                 bpm: psychSong.bpm,
                 format: CHART_FORMAT,
                 stepsPerBeat: 4,
-                beatsPerSection: 4
+                beatsPerSection: 4,
+                stage: psychSong.stage
             };
 
             for (section in psychSong.notes)
             {
                 var curSection:ALESongSection = {
                     notes: [],
-                    camera: [section.gfSection ? 2 : section.mustHitSection ? 1 : 0, 0],
+                    camera: [section.gfSection ? 0 : section.mustHitSection ? 2 : 1, 0],
                     bpm: section.changeBPM == true ? section.bpm : psychSong.bpm,
                     changeBPM: section.changeBPM ?? false
                 };
@@ -153,7 +157,7 @@ class ALEFormatter
     
     public static final CHARACTER_FORMAT:String = 'ale-character-v0.1';
 
-    public static function getCharacter(char:String):ALECharacter
+    public static function getCharacter(char:String, type:CharacterType):ALECharacter
     {
         var json:Dynamic = Paths.json('characters/' + char);
 
@@ -185,6 +189,15 @@ class ALEFormatter
             format: CHARACTER_FORMAT
         };
 
+        if (type == 'player')
+        {
+            result.cameraPosition.x += 100;
+            result.cameraPosition.y -= 100;
+        } else {
+            result.cameraPosition.x += 150;
+            result.cameraPosition.y -= 100;
+        }
+
         for (anim in psychJson.animations)
             result.animations.push({
                 prefix: anim.name,
@@ -199,6 +212,54 @@ class ALEFormatter
             });
 
         return result;
+    }
+
+    public static final STAGE_FORMAT:String = 'ale-stage-v0.1';
+
+    public static function getStage(id:String):ALEStage
+    {
+        var json:Dynamic = Paths.json('stages/' + id);
+
+        if (json.format == STAGE_FORMAT)
+            return cast json;
+
+        return {
+            speed: json.camera_speed,
+            zoom: json.defaultZoom,
+            ui: json.isPixelStage ? 'pixel' : 'default',
+            characterOffset: {
+                type: {
+                    player: {
+                        x: json.boyfriend[0],
+                        y: json.boyfriend[1]
+                    },
+                    opponent: {
+                        x: json.opponent[0],
+                        y: json.opponent[1]
+                    },
+                    extra: {
+                        x: json.girlfriend[0],
+                        y: json.girlfriend[1]
+                    }
+                }
+            },
+            cameraOffset: {
+                type: {
+                    player: {
+                        x: json.camera_boyfriend[0],
+                        y: json.camera_boyfriend[1]
+                    },
+                    opponent: {
+                        x: json.camera_opponent[0],
+                        y: json.camera_opponent[1]
+                    },
+                    extra: {
+                        x: json.camera_girlfriend[0],
+                        y: json.camera_girlfriend[1]
+                    }
+                }
+            }
+        };
     }
 
     public static function getStrumLine(strl:String):ALEStrumLine

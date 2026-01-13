@@ -23,12 +23,16 @@ class Character extends FunkinSprite
 
     public var data:ALECharacter;
 
+    public var id:String;
+
     public function change(id:String, ?type:CharacterType)
     {
         if (type != null)
             this.type = type;
 
-        data = ALEFormatter.getCharacter(id);
+        this.id = id;
+
+        data = ALEFormatter.getCharacter(id, this.type);
         
         scale.x = scale.y = data.scale;
 

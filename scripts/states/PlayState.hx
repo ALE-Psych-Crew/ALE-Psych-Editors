@@ -1,6 +1,7 @@
 import lime.app.Application;
 
 import flixel.math.FlxPoint;
+import flixel.FlxObject;
 
 import utils.ALEFormatter;
 
@@ -8,9 +9,14 @@ import funkin.visuals.game.StrumLine;
 
 import funkin.visuals.game.Character;
 
+//import core.structures.ALESong;
+//import core.structures.ALESongSection;
+
 using StringTools;
 
 var SONG:ALESong;
+
+var STAGE:ALEStage;
 
 var instSound:openfl.media.Sound;
 
@@ -18,8 +24,12 @@ function new(?song:String, ?difficulty:String)
 {
     SONG ??= ALEFormatter.getSong(song ?? 'bopeebo', difficulty ?? 'hard');
 
+    STAGE ??= ALEFormatter.getStage(SONG.stage);
+
     instSound = Paths.voices('songs/' + (song ?? 'bopeebo'));
 }
+
+var camFollow:FlxObject;
 
 function postCreate()
 {
@@ -28,11 +38,21 @@ function postCreate()
     ClientPrefs.data.botplay = false;
 
     loadSong();
+
+    camFollow = new FlxObject(1, 1, 0, 0);
+
+    camGame.follow(camFollow);
+
+    camGame.followLerp = 2.5 * STAGE.speed ?? 1;
+
+    camGame.zoom = STAGE.zoom;
 }
 
 var characters:FlxTypedGroup<Character>;
 
 var strumLines:FlxTypedGroup<StrumLine>;
+
+var cameraCharacters:Array<Array<Character>> = [];
 
 function initStrumLines()
 {
@@ -74,7 +94,31 @@ function initStrumLines()
         final strlCharacters:Array<Character> = [];
 
         for (character in strl.characters)
-            strlCharacters.push(characters.add(new Character(character, strl.type)));
+        {
+            final character:Character = new Character(character, strl.type);
+
+            character.x = character.data.position.x;
+            character.y = character.data.position.y;
+
+            if (STAGE.characterOffset != null && STAGE.characterOffset.type != null)
+            {
+                final offset = Reflect.getProperty(STAGE.characterOffset.type, cast character.type);
+
+                if (offset != null)
+                {
+                    character.x += offset.x;
+                    character.y += offset.y;
+                }
+            }
+
+            cameraCharacters[strlIndex] ??= [];
+
+            cameraCharacters[strlIndex].push(character);
+
+            strlCharacters.push(character);
+
+            characters.add(character);
+        }
 
         strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters));
     }
@@ -87,11 +131,19 @@ function onUpdate(elapsed:Float)
 
 function loadSong()
 {
-    add(new FlxSprite().makeGraphic(FlxG.width, FlxG.height, FlxColor.fromRGB(50, 50, 50)));
-
     initStrumLines();
 
     Conductor.bpm = SONG.bpm;
+}
+
+function onSectionHit(curSection:Int)
+{
+    final songSection:ALESongSection = SONG.sections[curSection];
+
+    final character:Character = cameraCharacters[songSection.camera[0]][songSection.camera[1]];
+
+    camFollow.x = character.getMidpoint().x + character.data.cameraPosition.x * (character.type == 'player' ? -1 : 1);
+    camFollow.y = character.getMidpoint().y + character.data.cameraPosition.y;
 }
 
 function onBeatHit(curBeat:Int)
