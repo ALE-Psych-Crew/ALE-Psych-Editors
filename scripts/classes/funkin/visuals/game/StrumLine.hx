@@ -96,6 +96,8 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
             final parent:Note = note;
 
+            tempNotes.push(note);
+
             if (length > 0)
             {
                 final floorLength:Int = Math.floor(length / crochet);
@@ -112,11 +114,17 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
                     parent = sustain;
                 }
             }
-
-            tempNotes.push(note);
         }
+        
+        tempNotes.sort(
+            function(a:Note, b:Note)
+            {
+                if (a.time == b.time)
+                    return a.type == b.type ? 0 : b.type == 'note' ? 1 : -1;
 
-        tempNotes.reverse();
+                return a.time > b.time ? -1 : 1;
+            }
+        );
 
         for (note in tempNotes)
             unspawnNotes.add(note);

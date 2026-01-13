@@ -19,6 +19,11 @@ class Character extends FunkinSprite
         this.type = type;
 
         change(initial);
+
+        animation.onFinish.add((name) -> {
+            if (offsets.exists(name + '-loop'))
+                playAnim(name + '-loop');
+        });
     }
 
     public var data:ALECharacter;

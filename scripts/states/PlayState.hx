@@ -22,11 +22,11 @@ var instSound:openfl.media.Sound;
 
 function new(?song:String, ?difficulty:String)
 {
-    SONG ??= ALEFormatter.getSong(song ?? 'stress', difficulty ?? 'hard');
+    SONG ??= ALEFormatter.getSong(song ?? 'satin-panties', difficulty ?? 'hard');
 
     STAGE ??= ALEFormatter.getStage(SONG.stage);
 
-    instSound = Paths.voices('songs/' + (song ?? 'stress'));
+    instSound = Paths.voices('songs/' + (song ?? 'satin-panties'));
 }
 
 function postCreate()
