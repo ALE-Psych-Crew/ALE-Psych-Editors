@@ -142,7 +142,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
                     sustain.flipY = ClientPrefs.data.downScroll;
 
                     if (i != floorLength)
-                        sustain.setGraphicSize(sustain.width, crochet * (speed * 0.45) + 2);
+                        sustain.setGraphicSize(sustain.width, crochet * speed * 0.46);
                     
                     sustain.updateHitbox();
 
@@ -255,46 +255,43 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
             note.timeDistance = note.time - Conductor.songPosition;
 
-            final timeDistance:Float = note.timeDistance;
-            final data:Int = note.data;
-
-            final strum:Strum = strums.members[data];
+            final strum:Strum = strums.members[note.data];
 
             if (botplay)
             {
-                if (!note.hit && timeDistance <= 0)
+                if (!note.hit && note.timeDistance <= 0)
                     hitNote(note, note.type == 'note');
             } else {
                 if (note.type == 'note')
                 {
-                    if (Math.abs(timeDistance) <= shitWindow)
-                        if (keyJustPressed[data])
-                            if (notesToHit[data] == null || timeDistance < notesToHit[data].timeDistance)
-                                notesToHit[data] = note;
+                    if (Math.abs(note.timeDistance) <= shitWindow)
+                        if (keyJustPressed[note.data])
+                            if (notesToHit[note.data] == null || note.timeDistance < notesToHit[note.data].timeDistance)
+                                notesToHit[note.data] = note;
                 } else {
-                    if (!note.hit && timeDistance <= 0 && keyPressed[data] && note.parent.hit)
+                    if (!note.hit && note.timeDistance <= 0 && keyPressed[note.data] && note.parent.hit)
                         hitNote(note, false);
                 }
 
-                if (timeDistance < -shitWindow && !note.miss)
+                if (note.timeDistance < -shitWindow && !note.miss)
                     missNote(note);
-
-                if (timeDistance < -despawnWindow)
-                    removeNote(note);
             }
 
-            if (note.type != 'note' && note.hit && note.clipRect != null && note.clipRect.height <= 0)
-                removeNote(note);
-            
-            if (note.exists)
-                note.followStrum(strum, Conductor.stepCrochet, scrollSpeed);
+            if (note.type == 'note')
+            {
+                if (note.timeDistance < -despawnWindow)
+                    removeNote(note);
+            } else {
+                if ((note.hit && note.clipRect != null && note.clipRect.height <= 0) || (note.timeDistance < 0 && !note.isOnScreen()))
+                    removeNote(note);
+            }
 
             noteIndex++;
         }
 
         for (data in 0...totalStrums)
         {
-            if (notesToHit[data] != null)
+            if (!botplay && notesToHit[data] != null)
             {
                 keyJustPressed[data] = false;
 
@@ -319,6 +316,9 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
                 strum.playAnim('idle');
             }
         }
+
+        for (note in notes)
+            note.followStrum(strums.members[note.data], Conductor.stepCrochet, scrollSpeed);
     }
 
     public function hitNote(note:Note, ?remove:Bool)

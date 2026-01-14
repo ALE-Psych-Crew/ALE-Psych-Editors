@@ -31,10 +31,10 @@ function new(?song:String, ?difficulty:String)
 
 function postCreate()
 {
-    ClientPrefs.data.downScroll = false;
+    ClientPrefs.data.downScroll = true;
     ClientPrefs.data.botplay = false;
 
-    ClientPrefs.data.framerate = 120;
+    ClientPrefs.data.framerate = 1000;
 
     loadSong();
 
