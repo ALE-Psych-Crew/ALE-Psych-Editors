@@ -9,6 +9,7 @@ import funkin.visuals.game.Note;
 import flixel.input.keyboard.FlxKey;
 
 import haxe.ds.GenericStack;
+import haxe.ds.ObjectMap;
 
 import funkin.visuals.shaders.RGBPalette;
 
@@ -34,7 +35,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
     public var scrollSpeed:Float = 1;
 
-    public var inputsArray:Array<Array<FlxKey>>;
+    public var inputMap:ObjectMap<FlxKey, Int> = new ObjectMap();
 
     public final totalStrums:Int;
 
@@ -79,7 +80,11 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
         var inputs = ClientPrefs.controls.notes;
 
-        inputsArray = [inputs.left, inputs.down, inputs.up, inputs.right];
+        var inputsArray:Array<Array<FlxKey>> = [inputs.left, inputs.down, inputs.up, inputs.right];
+
+        for (arrayIndex => array in inputsArray)
+            for (key in array)
+                inputMap.set(key, arrayIndex);
 
         var strumHeight:Float = 0;
 
@@ -187,14 +192,12 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         if (botplay)
             return;
 
-        for (i in 0...totalStrums)
-        {
-            if (inputsArray[i].contains(key))
-            {
-                keyPressed[i] = true;
+        var strumIndex:Int = inputMap.get(key);
 
-                keyJustPressed[i] = true;
-            }
+        if (strumIndex != null)
+        {
+            keyPressed[strumIndex] = true;
+            keyJustPressed[strumIndex] = true;
         }
     }
 
@@ -203,14 +206,12 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         if (botplay)
             return;
 
-        for (i in 0...totalStrums)
-        {
-            if (inputsArray[i].contains(key))
-            {
-                keyPressed[i] = false;
+        var strumIndex:Int = inputMap.get(key);
 
-                keyJustReleased[i] = true;
-            }
+        if (strumIndex != null)
+        {
+            keyPressed[strumIndex] = false;
+            keyJustReleased[strumIndex] = true;
         }
     }
 
@@ -236,9 +237,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
         super.update(elapsed);
 
-        final songPosition:Float = Conductor.songPosition;
-
-        while (!unspawnNotes.isEmpty() && unspawnNotes.first().time <= songPosition + spawnWindow)
+        while (!unspawnNotes.isEmpty() && unspawnNotes.first().time <= Conductor.songPosition + spawnWindow)
             notes.add(unspawnNotes.pop());
 
         var noteIndex:Int = 0;
@@ -253,6 +252,8 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
                 continue;
             }
+
+            note.timeDistance = note.time - Conductor.songPosition;
 
             final timeDistance:Float = note.timeDistance;
             final data:Int = note.data;

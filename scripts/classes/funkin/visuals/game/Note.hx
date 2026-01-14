@@ -83,11 +83,6 @@ class Note extends scripting.haxe.ScriptSprite
         multSpeed = 1;
     }
 
-    override public function update(elapsed:Float)
-    {
-        super.update(elapsed);
-    }
-
     public var multSpeed(default, set):Float;
     function set_multSpeed(value:Float):Float
     {
@@ -125,11 +120,7 @@ class Note extends scripting.haxe.ScriptSprite
 
     public final speedMult:Float = ClientPrefs.data.downScroll ? -0.45 : 0.45;
 
-    public var timeDistance(get, never):Float;
-    function get_timeDistance():Float
-    {
-        return time - Conductor.songPosition;
-    }
+    public var timeDistance:Float = 0;
 
     public function followStrum(strum:Strum, crochet:Float, ?speed:Float)
     {
@@ -158,16 +149,17 @@ class Note extends scripting.haxe.ScriptSprite
         
         if (type != 'note' && hit)
         {
+            if (this.clipRect == null)
+                clipRect = FlxRect.get();
+
+            var clipY:Float = 0;
+
             if (ClientPrefs.data.downScroll)
-            {
-                var clipY:Float = ((y + height) - (strum.y + offsetY)) / scale.y;
+                clipY = ((y + height) - (strum.y + offsetY)) / scale.y;
+            else
+                clipY = ((strum.y + offsetY) - y) / scale.y;
 
-                clipRect = FlxRect.get(0, clipY, frameWidth, frameHeight - clipY);
-            } else {
-                var clipY:Float = ((strum.y + offsetY) - y) / scale.y;
-
-                clipRect = FlxRect.get(0, clipY, frameWidth, frameHeight - clipY);
-            }
+            clipRect.set(0, clipY, frameWidth, frameHeight - clipY);
         } else {
             clipRect = null;
         }
