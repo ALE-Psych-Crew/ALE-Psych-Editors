@@ -147,7 +147,7 @@ class Note extends scripting.haxe.ScriptSprite
         if (copyY)
             y = strum.y + offsetY + Math.sin(finalDirection) * distance - (ClientPrefs.data.downScroll && type != 'note' ? height : 0);
         
-        if (type != 'note' && hit)
+        if (type != 'note' && hit && timeDistance < 0)
         {
             if (this.clipRect == null)
                 clipRect = FlxRect.get();
