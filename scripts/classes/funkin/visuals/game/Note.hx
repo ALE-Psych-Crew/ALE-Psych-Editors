@@ -1,6 +1,5 @@
 package funkin.visuals.game;
 
-import funkin.visuals.shaders.RGBPalette;
 import funkin.visuals.shaders.RGBShaderReference;
 
 import flixel.math.FlxAngle;
@@ -37,7 +36,7 @@ class Note extends scripting.haxe.ScriptSprite
     public var singAnimation:String;
     public var missAnimation:String;
 
-    public function new(config:ALEStrum, time:Float, data:Int, length:Float, noteType:String, type:NoteType, space:Float, scale:Float, skins:Array<String>, character:Character)
+    public function new(config:ALEStrum, time:Float, data:Int, length:Float, noteType:String, type:NoteType, space:Float, scale:Float, skins:Array<String>, palette:RGBPalette, character:Character)
     {
         super();
 
@@ -77,16 +76,9 @@ class Note extends scripting.haxe.ScriptSprite
 
         x = data * space;
         
-		textureShader = new RGBShaderReference(super, new RGBPalette());
+		textureShader = new RGBShaderReference(super, palette);
 
         allowShader = config.shader != null;
-
-        if (allowShader)
-        {
-            textureShader.r = CoolUtil.colorFromString(config.shader[0]);
-            textureShader.g = CoolUtil.colorFromString(config.shader[1]);
-            textureShader.b = CoolUtil.colorFromString(config.shader[2]);
-        }
 
         multSpeed = 1;
     }

@@ -34,7 +34,7 @@ function postCreate()
     ClientPrefs.data.downScroll = false;
     ClientPrefs.data.botplay = false;
 
-    ClientPrefs.data.framerate = 1000;
+    ClientPrefs.data.framerate = 120;
 
     loadSong();
 
@@ -210,7 +210,7 @@ function onHotReloadingConfig()
             addHotReloadingFile('scripts/classes/' + pack.replace('.', '/') + '/' + file);
 }
 
-if (false)
+if (true)
 {
     final window:Window = Application.current.window;
 

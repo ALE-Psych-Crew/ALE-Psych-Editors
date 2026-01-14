@@ -10,6 +10,8 @@ import flixel.input.keyboard.FlxKey;
 
 import haxe.ds.GenericStack;
 
+import funkin.visuals.shaders.RGBPalette;
+
 /*
 import core.structures.ALEStrumLine;
 import core.structures.ALESongStrumLine;
@@ -35,6 +37,27 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
     public var inputsArray:Array<Array<FlxKey>>;
 
     public final totalStrums:Int;
+
+    public var notesShader:Array<RGBPalette> = [];
+
+    function getNoteShader(shader:Null<Array<String>>, data:Int):RGBPalette
+    {
+        if (notesShader[data] == null)
+        {
+            final palette:RGBPalette = new RGBPalette();
+
+            notesShader[data] = palette;
+
+            if (shader != null)
+            {
+                palette.r = CoolUtil.colorFromString(shader[0]);
+                palette.g = CoolUtil.colorFromString(shader[1]);
+                palette.b = CoolUtil.colorFromString(shader[2]);
+            }
+        }
+
+        return notesShader[data];
+    }
 
     public function new(chartData:ALESongStrumLine, arrayNotes:Array<Dynamic>, speed:Float, characters:Array<Character>)
     {
@@ -94,7 +117,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
             final strumConfig:ALEStrum = config.strums[data];
 
-            final note:Note = new Note(strumConfig, time, data, length, type, 'note', space, scale, textures, character);
+            final note:Note = new Note(strumConfig, time, data, length, type, 'note', space, scale, textures, getNoteShader(strumConfig.shader, data), character);
 
             final parent:Note = note;
 
@@ -106,7 +129,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
                 for (i in 0...(floorLength + 1))
                 {
-                    final sustain:Note = new Note(strumConfig, time + i * crochet, data, crochet, type, i == floorLength ? 'end' : 'sustain', space, scale, textures, character);
+                    final sustain:Note = new Note(strumConfig, time + i * crochet, data, crochet, type, i == floorLength ? 'end' : 'sustain', space, scale, textures, getNoteShader(strumConfig.shader, data), character);
                     sustain.offsetY = strum.height / 2;
                     sustain.offsetX = strum.width / 2 - sustain.width / 2;
                     sustain.parent = parent;
