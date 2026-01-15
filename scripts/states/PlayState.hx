@@ -8,10 +8,14 @@ import flixel.FlxObject;
 
 import utils.ALEFormatter;
 
+import haxe.Timer;
+
 import haxe.ds.StringMap;
 
 import funkin.visuals.game.StrumLine;
 import funkin.visuals.game.Character;
+
+import funkin.visuals.objects.Bar;
 
 //import core.structures.ALESong;
 //import core.structures.ALESongSection;
@@ -28,12 +32,20 @@ var instSound:openfl.media.Sound;
 
 function new(?song:String, ?difficulty:String)
 {
-    SONG ??= ALEFormatter.getSong(song ?? 'bopeebo', difficulty ?? 'hard');
+    SONG ??= ALEFormatter.getSong(song ?? 'stress', difficulty ?? 'hard');
 
     STAGE ??= ALEFormatter.getStage(SONG.stage);
 
-    instSound = Paths.voices('songs/' + (song ?? 'bopeebo'));
+    instSound = Paths.voices('songs/' + (song ?? 'stress'));
 }
+
+var characters:FlxTypedGroup<Character>;
+
+var opponents:FlxTypedGroup<Character>;
+var players:FlxTypedGroup<Character>;
+var extras:FlxTypedGroup<Character>;
+
+var healthBar:Bar;
 
 function postCreate()
 {
@@ -42,6 +54,8 @@ function postCreate()
 
     ClientPrefs.data.framerate = 60;
 
+    camGame.bgColor = FlxColor.GRAY;
+
     loadSong();
 
     initStage();
@@ -49,15 +63,36 @@ function postCreate()
     initControls();
 
     initCamera();
+
+    healthBar = new Bar(0, FlxG.height * (ClientPrefs.data.downScroll ? 0.1 : 0.9), 50, true);
+    healthBar.x = FlxG.width / 2 - healthBar.width / 2;
+    healthBar.cameras = [camHUD];
+    add(healthBar);
+    
+    if (opponents.members[0] != null)
+        healthBar.rightBar.color = CoolUtil.colorFromString(opponents.members[0].data.barColor);
+    
+    if (players.members[0] != null)
+        healthBar.leftBar.color = CoolUtil.colorFromString(players.members[0].data.barColor);
     
     FlxG.sound.playMusic(instSound);
 }
 
-var characters:FlxTypedGroup<Character>;
+var health(default, set):Float = 1;
 
-var opponents:FlxTypedGroup<Character>;
-var players:FlxTypedGroup<Character>;
-var extras:FlxTypedGroup<Character>;
+function set_health(value:Float):Float
+{
+    health = value;
+
+    updateHealth();
+
+    return health;
+}
+
+function updateHealth()
+{
+    healthBar.percent = health * 50;
+}
 
 var strumLines:FlxTypedGroup<StrumLine>;
 
@@ -139,7 +174,7 @@ function initStrumLines()
             addCharacter(character);
         }
 
-        strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters));
+        //strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters));
     }
 }
 
@@ -255,11 +290,6 @@ function initCamera()
     camGame.followLerp = 2.5 * STAGE.speed ?? 1;
 
     camGame.zoom = STAGE.zoom;
-}
-
-function onUpdate(elapsed:Float)
-{
-    Conductor.songPosition = FlxG.sound.music.time;
 }
 
 function onSectionHit(curSection:Int)
