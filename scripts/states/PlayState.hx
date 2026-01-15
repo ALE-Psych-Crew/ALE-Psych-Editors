@@ -16,6 +16,7 @@ import funkin.visuals.game.StrumLine;
 import funkin.visuals.game.Character;
 
 import funkin.visuals.objects.Bar;
+import funkin.visuals.objects.Icon;
 
 //import core.structures.ALESong;
 //import core.structures.ALESongSection;
@@ -47,6 +48,19 @@ var extras:FlxTypedGroup<Character>;
 
 var healthBar:Bar;
 
+var playerIcon:Icon;
+var opponentIcon:Icon;
+
+var icons:FlxTypedGroup<Icon>;
+
+var iconP1(get, never):Icon;
+function get_iconP1():Icon
+    return playerIcon;
+
+var iconP2(get, never):Icon;
+function get_iconP2():Icon
+    return opponentIcon;
+
 function postCreate()
 {
     ClientPrefs.data.downScroll = false;
@@ -68,14 +82,58 @@ function postCreate()
     healthBar.x = FlxG.width / 2 - healthBar.width / 2;
     healthBar.cameras = [camHUD];
     add(healthBar);
-    
-    if (opponents.members[0] != null)
-        healthBar.rightBar.color = CoolUtil.colorFromString(opponents.members[0].data.barColor);
-    
-    if (players.members[0] != null)
-        healthBar.leftBar.color = CoolUtil.colorFromString(players.members[0].data.barColor);
-    
+
+    initIcons();
+
     FlxG.sound.playMusic(instSound);
+}
+
+function initIcons()
+{
+    icons = new FlxTypedGroup<Icon>();
+
+    playerIcon = new Icon('player');
+    playerIcon.cameras = [camHUD];
+    playerIcon.offsetX = 20;
+    addIcon(playerIcon);
+    
+    opponentIcon = new Icon('opponent');
+    opponentIcon.cameras = [camHUD];
+    opponentIcon.offsetX = 20;
+    addIcon(opponentIcon);
+
+    final mainOpponent:Character = opponents.members[0];
+
+    if (mainOpponent != null)
+    {
+        healthBar.rightBar.color = CoolUtil.colorFromString(mainOpponent.data.barColor);
+
+        opponentIcon.change(mainOpponent.data.icon);
+    } else {
+        healthBar.rightBar.color = FlxColor.BLACK;
+
+        opponentIcon.visible = false;
+    }
+
+    final mainPlayer:Character = players.members[0];
+    
+    if (mainPlayer != null)
+    {
+        healthBar.leftBar.color = CoolUtil.colorFromString(mainPlayer.data.barColor);
+
+        playerIcon.change(mainPlayer.data.icon);
+    } else {
+        healthBar.leftBar.color = FlxColor.BLACK;
+
+        playerIcon.visible = false;
+    }
+}
+
+function addIcon(icon:Icon)
+{
+    icons.add(icon);
+
+    add(icon);
 }
 
 var health(default, set):Float = 1;
@@ -329,6 +387,56 @@ function onBeatHit(curBeat:Int)
             char.dance();
         }
     );
+
+    icons.forEachAlive(
+        (icon) -> {
+            bopIcon(icon);
+        }
+    );
+}
+
+function onUpdate(elapsed:Float)
+{
+    icons.forEachAlive(
+        (icon) -> {
+            iconScale(icon);
+        }
+    );
+}
+
+function bopIcon(icon:Icon)
+{
+    icon.scale.x = icon.scale.y = 1.2;
+    icon.updateHitbox();
+
+    iconPosition(icon);
+}
+
+function iconScale(icon:Icon)
+{
+    var mult:Float = CoolUtil.fpsLerp(icon.scale.x, 1, 0.3);
+
+    icon.scale.x = icon.scale.y = mult;
+    icon.updateHitbox();
+
+    icons.forEachAlive(
+        (icon) -> {
+            iconPosition(icon);
+        }
+    );
+}
+
+function iconPosition(icon:Icon)
+{
+    final barMiddle:Float = healthBar.getMiddle();
+
+    final isRight:Bool = icon.type == 'player' == healthBar.rightToLeft;
+
+    icon.x = isRight ? (barMiddle.x - icon.offsetX) : (barMiddle.x - icon.width + icon.offsetX);
+    icon.y = barMiddle.y - icon.height / 2 + icon.offsetY;
+
+    if (icon.flipX != isRight)
+        icon.flipX = isRight;
 }
 
 function onDestroy()

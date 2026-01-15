@@ -1,5 +1,6 @@
 package funkin.visuals.objects;
 
+import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
 
 class Bar extends scripting.haxe.ScriptSpriteGroup
@@ -7,6 +8,9 @@ class Bar extends scripting.haxe.ScriptSpriteGroup
     public var percent(default, set):Float;
     function set_percent(value:Float):Float
     {
+        if (percent == value)
+            return value;
+
         percent = value;
 
         var bgScale:Float = bg.width * percent / 100;
@@ -29,6 +33,9 @@ class Bar extends scripting.haxe.ScriptSpriteGroup
     public var rightToLeft(default, set):Bool;
     function set_rightToLeft(value:Bool)
     {
+        if (rightToLeft == value)
+            return value;
+
         rightToLeft = value;
 
         if (percent != null)
@@ -58,5 +65,10 @@ class Bar extends scripting.haxe.ScriptSpriteGroup
         this.rightToLeft = rightToLeft ?? false;
 
         this.percent = percent ?? 50;
+    }
+
+    public function getMiddle():FlxPoint
+    {
+        return FlxPoint.get(x + (rightToLeft ? rightBar.clipRect.width : leftBar.clipRect.width), y + bg.height / 2);
     }
 }
