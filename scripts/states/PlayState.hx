@@ -38,7 +38,7 @@ function new(?song:String, ?difficulty:String)
 function postCreate()
 {
     ClientPrefs.data.downScroll = false;
-    ClientPrefs.data.botplay = true;
+    ClientPrefs.data.botplay = false;
 
     ClientPrefs.data.framerate = 60;
 
@@ -139,7 +139,7 @@ function initStrumLines()
             addCharacter(character);
         }
 
-        //strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters));
+        strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters));
     }
 }
 
@@ -201,12 +201,14 @@ function initStage()
 
             if (addMethod != null)
                 Reflect.callMethod(this, addMethod, [obj]);
+
+            stageObjects.set(object.id, obj);
         }
     }
 }
 
 function addBehindGroup(group:FlxTypedGroup, obj:FlxBasic)
-    insert(members.indexOf(group.members[0]) - 1, obj);
+    insert(members.indexOf(group.members[0]), obj);
 
 function initControls()
 {

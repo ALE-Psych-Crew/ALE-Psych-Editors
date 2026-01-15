@@ -216,13 +216,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
     }
 
     public var spawnWindow:Float = 0;
-    public var despawnWindow:Float = 0;
-
-    function updateSpawnWindow()
-    {
-        spawnWindow = 2000 / scrollSpeed;
-        despawnWindow = 650 / scrollSpeed;
-    }
+    public var despawnWindow:Float = 650;
 
     var _lastScrollSpeed:Float = 0;
 
@@ -232,7 +226,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         {
             _lastScrollSpeed = scrollSpeed;
 
-            updateSpawnWindow();
+            spawnWindow = 2000 / scrollSpeed;
         }
 
         super.update(elapsed);
@@ -277,14 +271,8 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
                     missNote(note);
             }
 
-            if (note.type == 'note')
-            {
-                if (note.timeDistance < -despawnWindow)
-                    removeNote(note);
-            } else {
-                if ((note.hit && note.clipRect != null && note.clipRect.height <= 0) || (note.timeDistance < 0 && !note.isOnScreen()))
-                    removeNote(note);
-            }
+            if (note.timeDistance < -despawnWindow)
+                removeNote(note);
 
             noteIndex++;
         }
