@@ -1,7 +1,7 @@
 package core.structures;
 
 typedef ALEStageObject = {
-    var tag:String;
+    var id:String;
     @:optional var classPath:String;
     @:optional var classArguments:Array<Dynamic>;
     @:optional var path:String;

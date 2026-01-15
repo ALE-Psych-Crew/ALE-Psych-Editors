@@ -1,16 +1,22 @@
 import lime.app.Application;
 
+import flixel.FlxBasic;
+
 import flixel.input.keyboard.FlxKey;
 import flixel.math.FlxPoint;
 import flixel.FlxObject;
 
 import utils.ALEFormatter;
 
+import haxe.ds.StringMap;
+
 import funkin.visuals.game.StrumLine;
 import funkin.visuals.game.Character;
 
 //import core.structures.ALESong;
 //import core.structures.ALESongSection;
+
+//import core.structures.Point;
 
 using StringTools;
 
@@ -31,12 +37,14 @@ function new(?song:String, ?difficulty:String)
 
 function postCreate()
 {
-    ClientPrefs.data.downScroll = true;
-    ClientPrefs.data.botplay = false;
+    ClientPrefs.data.downScroll = false;
+    ClientPrefs.data.botplay = true;
 
-    ClientPrefs.data.framerate = 1000;
+    ClientPrefs.data.framerate = 60;
 
     loadSong();
+
+    initStage();
 
     initControls();
 
@@ -46,6 +54,10 @@ function postCreate()
 }
 
 var characters:FlxTypedGroup<Character>;
+
+var opponents:FlxTypedGroup<Character>;
+var players:FlxTypedGroup<Character>;
+var extras:FlxTypedGroup<Character>;
 
 var strumLines:FlxTypedGroup<StrumLine>;
 
@@ -81,7 +93,11 @@ function initStrumLines()
 
     Conductor.bpm = SONG.bpm;
 
-    add(characters = new FlxTypedGroup<Character>());
+    characters = new FlxTypedGroup<Character>();
+    
+    opponents = new FlxTypedGroup<Character>();
+    players = new FlxTypedGroup<Character>();
+    extras = new FlxTypedGroup<Character>();
 
     add(strumLines = new FlxTypedGroup<StrumLine>());
     strumLines.cameras = [camHUD];
@@ -97,14 +113,20 @@ function initStrumLines()
             character.x = character.data.position.x;
             character.y = character.data.position.y;
 
-            if (STAGE.characterOffset != null && STAGE.characterOffset.type != null)
+            if (STAGE.characterOffset != null)
             {
-                final offset = Reflect.getProperty(STAGE.characterOffset.type, cast character.type);
+                var offset:Point;
+
+                if (STAGE.characterOffset.type != null)
+                    offset = Reflect.getProperty(STAGE.characterOffset.type, cast character.type);
+
+                if (STAGE.characterOffset.id != null)
+                    offset = Reflect.getProperty(STAGE.characterOffset.id, character.id);
 
                 if (offset != null)
                 {
-                    character.x += offset.x;
-                    character.y += offset.y;
+                    character.x += offset.x ?? 0;
+                    character.y += offset.y ?? 0;
                 }
             }
 
@@ -114,12 +136,77 @@ function initStrumLines()
 
             strlCharacters.push(character);
 
-            characters.add(character);
+            addCharacter(character);
         }
 
-        strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters));
+        //strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters));
     }
 }
+
+function addCharacter(character:Character)
+{
+    switch (character.type)
+    {
+        case 'opponent':
+            opponents.add(character);
+        case 'player':
+            players.add(character);
+        case 'extra':
+            extras.add(character);
+    }
+
+    characters.add(character);
+
+    add(character);
+}
+
+function addBehindOpponents(obj:FlxBasic)
+    addBehindGroup(opponents, obj);
+
+function addBehindPlayers(obj:FlxBasic)
+    addBehindGroup(players, obj);
+
+function addBehindExtras(obj:FlxBasic)
+    addBehindGroup(extras, obj);
+
+var addBehindDad:FlxBasic -> Void = this.addBehindOpponents;
+var addBehindBF:FlxBasic -> Void = this.addBehindPlayers;
+var addBehindGF:FlxBasic -> Void = this.addBehindExtras;
+
+var stageObjects:StringMap<FlxSprite> = new StringMap<FlxSprite>();
+
+function initStage()
+{
+    if (STAGE.objectsConfig != null)
+    {
+        final config = STAGE.objectsConfig;
+
+        for (object in config.objects)
+        {
+            final obj:FlxSprite = Type.createInstance(Type.resolveClass(object.classPath ?? 'flixel.FlxSprite'), object.classArguments ?? []);
+
+            obj.loadGraphic(Paths.image('stages/' + config.directory + '/' + (object.path ?? object.id)));
+
+            for (props in [config.properties, object.properties])
+                if (props != null)
+                    CoolUtil.setMultiProperty(obj, props);
+
+            var addMethod:FlxBasic -> Dynamic = null;
+
+            #if flixel
+            addMethod = Reflect.getProperty(this, object.addMethod ?? 'addBehindExtras');
+            #else
+            addMethod = Reflect.getProperty(this, 'variables').get(object.addMethod ?? 'addBehindExtras');
+            #end
+
+            if (addMethod != null)
+                Reflect.callMethod(this, addMethod, [obj]);
+        }
+    }
+}
+
+function addBehindGroup(group:FlxTypedGroup, obj:FlxBasic)
+    insert(members.indexOf(group.members[0]) - 1, obj);
 
 function initControls()
 {
@@ -184,6 +271,23 @@ function onSectionHit(curSection:Int)
 
     camFollow.x = character.getMidpoint().x + character.data.cameraPosition.x * (character.type == 'player' ? -1 : 1);
     camFollow.y = character.getMidpoint().y + character.data.cameraPosition.y;
+
+    if (STAGE.cameraOffset != null)
+    {
+        var offset:Point;
+
+        if (STAGE.cameraOffset.type != null)
+            offset = Reflect.getProperty(STAGE.cameraOffset.type, cast character.type);
+
+        if (STAGE.cameraOffset.id != null)
+            offset = Reflect.getProperty(STAGE.cameraOffset.id, character.id);
+
+        if (offset != null)
+        {
+            camFollow.x += offset.x ?? 0;
+            camFollow.y += offset.y ?? 0;
+        }
+    }
 }
 
 function onBeatHit(curBeat:Int)
