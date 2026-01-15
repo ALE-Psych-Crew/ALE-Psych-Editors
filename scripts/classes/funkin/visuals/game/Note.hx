@@ -116,6 +116,9 @@ class Note extends scripting.haxe.ScriptSprite
     public var offsetAngle:Float = 0;
     public var offsetDirection:Float = 0;
 
+	public var hitHealth:Float = 0.025;
+	public var missHealth:Float = 0.0475;
+
     public var multAlpha:Float = 1;
 
     public final speedMult:Float = ClientPrefs.data.downScroll ? -0.45 : 0.45;

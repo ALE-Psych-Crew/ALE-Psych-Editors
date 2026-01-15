@@ -290,7 +290,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
                         hitNote(note, false);
                 }
 
-                if (note.timeDistance < -shitWindow && !note.miss)
+                if (note.timeDistance < -shitWindow && !note.miss && !note.hit)
                     missNote(note);
             }
 
@@ -332,17 +332,17 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
             note.followStrum(strums.members[note.data], Conductor.stepCrochet, scrollSpeed);
     }
 
-    public var onHitNote:Note -> Bool -> Dynamic;
+    public var onHitNote:Note -> Rating -> Bool -> Dynamic;
     public var postHitNote:Note -> Bool -> Void;
 
     public function hitNote(note:Note, ?remove:Bool)
     {
-        final callbackResult:Dynamic = onHitNote == null ? null : onHitNote(note, remove);
+        final rating:Rating = judgeNote(note.timeDistance);
+
+        final callbackResult:Dynamic = onHitNote == null ? null : onHitNote(note, rating, remove);
 
         if (callbackResult != CoolVars.Function_Stop)
         {
-            final rating:Rating = judgeNote(note.timeDistance);
-
             note.hit = true;
 
             note.character.sing(note.type != 'note' && !note.character.data.sustainAnimation ? null : note.singAnimation);
