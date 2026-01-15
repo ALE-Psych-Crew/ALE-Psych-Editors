@@ -33,11 +33,11 @@ var instSound:openfl.media.Sound;
 
 function new(?song:String, ?difficulty:String)
 {
-    SONG ??= ALEFormatter.getSong(song ?? 'stress', difficulty ?? 'hard');
+    SONG ??= ALEFormatter.getSong(song ?? 'bopeebo', difficulty ?? 'hard');
 
     STAGE ??= ALEFormatter.getStage(SONG.stage);
 
-    instSound = Paths.voices('songs/' + (song ?? 'stress'));
+    instSound = Paths.voices('songs/' + (song ?? 'bopeebo'));
 }
 
 var characters:FlxTypedGroup<Character>;
@@ -67,8 +67,6 @@ function postCreate()
     ClientPrefs.data.botplay = false;
 
     ClientPrefs.data.framerate = 60;
-
-    camGame.bgColor = FlxColor.GRAY;
 
     loadSong();
 
@@ -140,7 +138,7 @@ var health(default, set):Float = 1;
 
 function set_health(value:Float):Float
 {
-    health = value;
+    health = FlxMath.bound(value, 0, 100);
 
     updateHealth();
 
@@ -232,7 +230,7 @@ function initStrumLines()
             addCharacter(character);
         }
 
-        //strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters));
+        strumLines.add(new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters));
     }
 }
 

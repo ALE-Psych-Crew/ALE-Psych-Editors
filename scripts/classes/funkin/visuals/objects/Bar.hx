@@ -8,6 +8,8 @@ class Bar extends scripting.haxe.ScriptSpriteGroup
     public var percent(default, set):Float;
     function set_percent(value:Float):Float
     {
+        value = FlxMath.bound(value, 0, 100);
+
         if (percent == value)
             return value;
 
