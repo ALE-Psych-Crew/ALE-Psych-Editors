@@ -4,7 +4,7 @@ import utils.ALEFormatter;
 
 import funkin.visuals.game.Strum;
 import funkin.visuals.game.Splash;
-import funkin.visuals.game.Note;
+import funkin.visuals.game.NeoNote as Note;
 
 import flixel.input.keyboard.FlxKey;
 

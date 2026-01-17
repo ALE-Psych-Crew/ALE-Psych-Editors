@@ -13,9 +13,9 @@ import haxe.Timer;
 import haxe.ds.StringMap;
 
 import funkin.visuals.game.StrumLine;
-import funkin.visuals.game.Character;
+import funkin.visuals.game.NeoCharacter as Character;
 
-import funkin.visuals.objects.Bar;
+import funkin.visuals.objects.NeoBar as Bar;
 import funkin.visuals.objects.Icon;
 
 //import core.structures.ALESong;
@@ -79,14 +79,25 @@ var scoreTxt(get, never):FlxText;
 function get_scoreTxt():FlxText
     return scoreText;
 
+var botplay(default, set):Bool;
+function set_botplay(value:Bool):Bool
+{
+    botplay = value;
+
+    for (strl in strumLine)
+        strl.botplay = strl.type != 'player' || botplay;
+
+    return botplay;
+}
+
 function postCreate()
 {
     ClientPrefs.data.downScroll = false;
-    ClientPrefs.data.botplay = false;
+    ClientPrefs.data.botplay = true;
 
     ClientPrefs.data.framerate = 60;
 
-    loadSong();
+    initSong();
 
     initStage();
 
@@ -94,24 +105,18 @@ function postCreate()
 
     initCamera();
 
+    initHud();
+
+    FlxG.sound.playMusic(instSound, 1, false);
+}
+
+function initHud()
+{
     healthBar = new Bar(0, FlxG.height * (ClientPrefs.data.downScroll ? 0.1 : 0.9), 50, true);
     healthBar.x = FlxG.width / 2 - healthBar.width / 2;
     healthBar.cameras = [camHUD];
     add(healthBar);
 
-    initIcons();
-
-    scoreText = new FlxText(0, healthBar.y + 40, FlxG.width, 'Score      Misses      Rating');
-    scoreText.setFormat(Paths.font('vcr.ttf'), 18, FlxColor.WHITE, 'center', FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-    scoreText.borderSize = 1.25;
-    scoreText.cameras = [camHUD];
-    add(scoreText);
-
-    FlxG.sound.playMusic(instSound, 1, false);
-}
-
-function initIcons()
-{
     icons = new FlxTypedGroup<Icon>();
 
     playerIcon = new Icon('player');
@@ -145,6 +150,12 @@ function initIcons()
 
         playerIcon.visible = false;
     }
+
+    scoreText = new FlxText(0, healthBar.y + 40, FlxG.width, 'Score      Misses      Rating');
+    scoreText.setFormat(Paths.font('vcr.ttf'), 17, FlxColor.WHITE, 'center', FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+    scoreText.borderSize = 1.25;
+    scoreText.cameras = [camHUD];
+    add(scoreText);
 }
 
 function addIcon(icon:Icon)
@@ -350,7 +361,7 @@ function onUpdate(elapsed:Float)
         }
     );
 
-    scoreText.text = ClientPrefs.data.botplay ? 'BOTPLAY' : 'Score: ' + score + '      Misses: ' + misses + '      Accuracy: ' + CoolUtil.floorDecimal(accuracy, 2) + '%';
+    scoreText.text = ClientPrefs.data.botplay ? 'BOTPLAY' : 'Score: ' + score + '    Misses: ' + misses + '    Accuracy: ' + CoolUtil.floorDecimal(accuracy, 2) + '%';
 }
 
 function addCharacter(character:Character)
@@ -447,7 +458,7 @@ function justReleasedKey(event:KeyboardEvent)
     );
 }
 
-function loadSong()
+function initSong()
 {
     initStrumLines();
 

@@ -8,7 +8,7 @@ import utils.ALEFormatter;
 
 //import core.enums.CharacterType;
 
-class Character extends FunkinSprite
+class NeoCharacter extends FunkinSprite
 {
     public var type:CharacterType;
 

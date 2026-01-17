@@ -3,7 +3,7 @@ package funkin.visuals.objects;
 import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
 
-class Bar extends scripting.haxe.ScriptSpriteGroup
+class NeoBar extends scripting.haxe.ScriptSpriteGroup
 {
     public var percent(default, set):Float;
     function set_percent(value:Float):Float

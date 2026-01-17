@@ -12,7 +12,7 @@ import core.structures.ALEStrum;
 import core.enums.NoteType;
 */
 
-class Note extends scripting.haxe.ScriptSprite
+class NeoNote extends scripting.haxe.ScriptSprite
 {
     public var textureShader:RGBShaderReference;
 
