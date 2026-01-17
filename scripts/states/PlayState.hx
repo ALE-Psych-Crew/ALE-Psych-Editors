@@ -89,13 +89,59 @@ var accuracy(get, never):Float;
 function get_accuracy():Float
     return totalPlayed == 0 ? 0 : accuracyMod / totalPlayed;
 
+public function calculateBPMChanges(?song:Null<ALESong>)
+{
+    if (song == null)
+    {
+        bpmChangeMap = null;
+
+        return;
+    }
+
+    var curTime:Float = 0;
+    var curStep:Int = 0;
+
+    Conductor.bpm = song.bpm;
+    
+    bpmChangeMap = [
+        {
+            bpm: Conductor.bpm,
+            time: 0,
+            step: 0
+        }
+    ];
+
+    for (section in song.sections)
+    {
+        if (section.changeBPM && section.bpm != Conductor.bpm)
+        {
+            Conductor.bpm = section.bpm;
+
+            bpmChangeMap.push(
+                {
+                    bpm: Conductor.bpm,
+                    time: curTime,
+                    step: curStep
+                }
+            );
+        }
+        
+        curTime += Conductor.sectionCrochet;
+        curStep += Conductor.beatsPerSection * Conductor.stepsPerBeat;
+    }
+
+    Conductor.bpm = song.bpm;
+}
+
 function new(?song:String, ?difficulty:String)
 {
-    song ??= 'dad-battle';
+    song ??= 'satin-panties';
     difficulty ??= 'hard';
 
     SONG ??= ALEFormatter.getSong(song, difficulty);
     STAGE ??= ALEFormatter.getStage(SONG.stage);
+
+    calculateBPMChanges(SONG);
 
     instSound = Paths.inst('songs/' + (song));
     
@@ -169,11 +215,11 @@ function onUpdate(elapsed:Float)
 function onSectionHit()
 {
     final songSection:ALESongSection = SONG.sections[curSection];
+
     if (songSection == null)
         return;
 
-    final character:Character =
-        cameraCharacters[songSection.camera[0]][songSection.camera[1]];
+    final character:Character = cameraCharacters[songSection.camera[0]][songSection.camera[1]];
 
     camFollow.x = character.getMidpoint().x + character.data.cameraPosition.x * (character.type == 'player' ? -1 : 1);
     camFollow.y = character.getMidpoint().y + character.data.cameraPosition.y;
@@ -295,8 +341,10 @@ function updateHealth()
 function initStrumLines()
 {
     final notes:Array<Array<Dynamic>> = [];
+
     Conductor.bpm = SONG.bpm;
 
+    #if flixel
     for (section in SONG.sections)
     {
         if (section.changeBPM)
@@ -315,8 +363,8 @@ function initStrumLines()
             ]);
         }
     }
-
     Conductor.bpm = SONG.bpm;
+    #end
 
     characters = new FlxTypedGroup<Character>();
     opponents = new FlxTypedGroup<Character>();
@@ -579,7 +627,7 @@ function onHotReloadingConfig()
             addHotReloadingFile('scripts/classes/' + pack.replace('.', '/') + '/' + file);
 }
 
-if (false)
+if (true)
 {
     final window:Window = Application.current.window;
 

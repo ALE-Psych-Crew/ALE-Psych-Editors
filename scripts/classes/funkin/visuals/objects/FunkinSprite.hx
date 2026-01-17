@@ -65,7 +65,7 @@ class FunkinSprite extends scripting.haxe.ScriptSprite
             sy = sx * sin + sy * cos;
             sx = tx;
         }
-
+        
         offset.set(sx, sy);
     }
 }
