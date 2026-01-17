@@ -26,25 +26,40 @@ import funkin.visuals.objects.Icon;
 using StringTools;
 
 var SONG:ALESong;
-
 var STAGE:ALEStage;
 
 var instSound:openfl.media.Sound;
 
-function new(?song:String, ?difficulty:String)
-{
-    SONG ??= ALEFormatter.getSong(song ?? 'bopeebo', difficulty ?? 'hard');
-
-    STAGE ??= ALEFormatter.getStage(SONG.stage);
-
-    instSound = Paths.voices('songs/' + (song ?? 'bopeebo'));
-}
-
 var characters:FlxTypedGroup<Character>;
-
 var opponents:FlxTypedGroup<Character>;
 var players:FlxTypedGroup<Character>;
 var extras:FlxTypedGroup<Character>;
+
+var strumLines:FlxTypedGroup<StrumLine>;
+
+var cameraCharacters:Array<Array<Character>> = [];
+
+var healthBar:Bar;
+
+var icons:FlxTypedGroup<Icon>;
+var playerIcon:Icon;
+var opponentIcon:Icon;
+
+var scoreText:FlxText;
+
+var camFollow:FlxObject;
+
+var stageObjects:StringMap<FlxSprite> = new StringMap<FlxSprite>();
+
+final vocalsToSync:Array<FlxSound> = [];
+
+var score:Float = 0;
+var totalPlayed:Int = 0;
+var accuracyMod:Float = 0;
+var misses:Int = 0;
+
+var health(default, set):Float = 1;
+var botplay(default, set):Bool;
 
 var dad(get, never):Character;
 function get_dad():Character
@@ -58,13 +73,6 @@ var gf(get, never):Character;
 function get_gf():Character
     return extras.members[0];
 
-var healthBar:Bar;
-
-var icons:FlxTypedGroup<Icon>;
-
-var playerIcon:Icon;
-var opponentIcon:Icon;
-
 var iconP1(get, never):Icon;
 function get_iconP1():Icon
     return playerIcon;
@@ -73,41 +81,131 @@ var iconP2(get, never):Icon;
 function get_iconP2():Icon
     return opponentIcon;
 
-var scoreText:FlxText;
-
 var scoreTxt(get, never):FlxText;
 function get_scoreTxt():FlxText
     return scoreText;
 
-var botplay(default, set):Bool;
+var accuracy(get, never):Float;
+function get_accuracy():Float
+    return totalPlayed == 0 ? 0 : accuracyMod / totalPlayed;
+
+function new(?song:String, ?difficulty:String)
+{
+    SONG ??= ALEFormatter.getSong(song ?? 'bopeebo', difficulty ?? 'hard');
+    STAGE ??= ALEFormatter.getStage(SONG.stage);
+    instSound = Paths.voices('songs/' + (song ?? 'bopeebo'));
+}
+
 function set_botplay(value:Bool):Bool
 {
     botplay = value;
 
-    for (strl in strumLine)
+    for (strl in strumLines)
         strl.botplay = strl.type != 'player' || botplay;
 
     return botplay;
 }
 
-function postCreate()
+function set_health(value:Float):Float
 {
-    ClientPrefs.data.downScroll = false;
-    ClientPrefs.data.botplay = true;
+    health = FlxMath.bound(value, 0, 2);
+    updateHealth();
+    return health;
+}
 
-    ClientPrefs.data.framerate = 60;
+function onCreate()
+{
+    ClientPrefs.data.downScroll = true;
+    ClientPrefs.data.botplay = false;
 
     initSong();
-
     initStage();
-
     initControls();
-
     initCamera();
-
     initHud();
 
     FlxG.sound.playMusic(instSound, 1, false);
+}
+
+function onUpdate(elapsed:Float)
+{
+    if (FlxG.sound.music.playing)
+        Conductor.songPosition += elapsed * 1000;
+
+    icons.forEachAlive(icon -> iconScale(icon));
+
+    scoreText.text = ClientPrefs.data.botplay
+        ? 'BOTPLAY'
+        : 'Score: ' + score + '    Misses: ' + misses + '    Accuracy: ' + CoolUtil.floorDecimal(accuracy, 2) + '%';
+
+    if (Controls.RESET)
+    {
+        FlxG.sound.music?.pause();
+        FlxG.resetState();
+    }
+}
+
+function onSectionHit()
+{
+    final songSection:ALESongSection = SONG.sections[curSection];
+    if (songSection == null)
+        return;
+
+    final character:Character =
+        cameraCharacters[songSection.camera[0]][songSection.camera[1]];
+
+    camFollow.x = character.getMidpoint().x + character.data.cameraPosition.x * (character.type == 'player' ? -1 : 1);
+    camFollow.y = character.getMidpoint().y + character.data.cameraPosition.y;
+
+    if (STAGE.cameraOffset != null)
+    {
+        var offset:Point = null;
+
+        if (STAGE.cameraOffset.type != null)
+            offset = Reflect.getProperty(STAGE.cameraOffset.type, cast character.type);
+
+        if (STAGE.cameraOffset.id != null)
+            offset = Reflect.getProperty(STAGE.cameraOffset.id, character.id);
+
+        if (offset != null)
+        {
+            camFollow.x += offset.x ?? 0;
+            camFollow.y += offset.y ?? 0;
+        }
+    }
+}
+
+function onStepHit()
+{
+    if (FlxG.sound.music != null && FlxG.sound.music.time >= -ClientPrefs.data.noteOffset)
+    {
+        final timeSub:Float = Conductor.songPosition - Conductor.offset;
+        final syncTime:Float = 20;
+
+        for (audio in [FlxG.sound.music].concat(vocalsToSync))
+        {
+            if (audio != null && audio.length > 0)
+            {
+                if (Math.abs(audio.time - timeSub) > syncTime)
+                {
+                    resyncVocals();
+                    break;
+                }
+            }
+        }
+    }
+}
+
+function onBeatHit()
+{
+    characters.forEachAlive(char -> char.dance());
+    icons.forEachAlive(icon -> bopIcon(icon));
+}
+
+function onDestroy()
+{
+    FlxG.stage.removeEventListener('keyDown', justPressedKey);
+    FlxG.stage.removeEventListener('keyUp', justReleasedKey);
 }
 
 function initHud()
@@ -123,7 +221,7 @@ function initHud()
     playerIcon.cameras = [camHUD];
     playerIcon.offsetX = 20;
     addIcon(playerIcon);
-    
+
     opponentIcon = new Icon('opponent');
     opponentIcon.cameras = [camHUD];
     opponentIcon.offsetX = 20;
@@ -132,22 +230,18 @@ function initHud()
     if (dad != null)
     {
         healthBar.rightBar.color = CoolUtil.colorFromString(dad.data.barColor);
-
         opponentIcon.change(dad.data.icon);
     } else {
         healthBar.rightBar.color = FlxColor.BLACK;
-
         opponentIcon.visible = false;
     }
 
     if (boyfriend != null)
     {
         healthBar.leftBar.color = CoolUtil.colorFromString(boyfriend.data.barColor);
-
         playerIcon.change(boyfriend.data.icon);
     } else {
         healthBar.leftBar.color = FlxColor.BLACK;
-
         playerIcon.visible = false;
     }
 
@@ -161,54 +255,25 @@ function initHud()
 function addIcon(icon:Icon)
 {
     icons.add(icon);
-
     add(icon);
-}
-
-var health(default, set):Float = 1;
-
-function set_health(value:Float):Float
-{
-    health = FlxMath.bound(value, 0, 100);
-
-    updateHealth();
-
-    return health;
 }
 
 function updateHealth()
 {
     healthBar.percent = health * 50;
+    final barMiddle:FlxPoint = healthBar.getMiddle();
+    icons.forEachAlive(icon -> iconPosition(icon, barMiddle));
 
-    icons.forEachAlive(
-        icon -> iconPosition(icon)
-    );
-    
     if (health <= 0)
     {
         FlxG.sound.music.pause();
-
         CoolUtil.openSubState(new CustomSubState(CoolVars.data.gameOverScreen));
     }
 }
 
-var strumLines:FlxTypedGroup<StrumLine>;
-
-var cameraCharacters:Array<Array<Character>> = [];
-
-var score:Float = 0;
-var totalPlayed:Int = 0;
-var accuracyMod:Float = 0;
-var misses:Int = 0;
-
-var accuracy(get, never):Float;
-function get_accuracy():Float
-    return totalPlayed == 0 ? 0 : accuracyMod / totalPlayed;
-
 function initStrumLines()
 {
     final notes:Array<Array<Dynamic>> = [];
-
     Conductor.bpm = SONG.bpm;
 
     for (section in SONG.sections)
@@ -219,24 +284,20 @@ function initStrumLines()
         for (note in section.notes)
         {
             notes[note[4][0]] ??= [];
-
-            notes[note[4][0]].push(
-                [
-                    note[0],
-                    note[1],
-                    note[2],
-                    note[3],
-                    note[4][1],
-                    Conductor.stepCrochet
-                ]
-            );
+            notes[note[4][0]].push([
+                note[0],
+                note[1],
+                note[2],
+                note[3],
+                note[4][1],
+                Conductor.stepCrochet
+            ]);
         }
     }
 
     Conductor.bpm = SONG.bpm;
 
     characters = new FlxTypedGroup<Character>();
-    
     opponents = new FlxTypedGroup<Character>();
     players = new FlxTypedGroup<Character>();
     extras = new FlxTypedGroup<Character>();
@@ -257,7 +318,7 @@ function initStrumLines()
 
             if (STAGE.characterOffset != null)
             {
-                var offset:Point;
+                var offset:Point = null;
 
                 if (STAGE.characterOffset.type != null)
                     offset = Reflect.getProperty(STAGE.characterOffset.type, cast character.type);
@@ -273,49 +334,44 @@ function initStrumLines()
             }
 
             cameraCharacters[strlIndex] ??= [];
-
             cameraCharacters[strlIndex].push(character);
-
             strlCharacters.push(character);
-
             addCharacter(character);
         }
 
         final strumLine:StrumLine = new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters);
 
-        strumLine.onHitNote = (note, rating, removeNote) -> {
-            switch (note.character.type)
+        strumLine.onHitNote = (note, rating, removeNote) ->
+        {
+            if (note.character.type == 'player')
             {
-                case 'player':
-                    health = health + note.hitHealth;
+                health = health + note.hitHealth;
 
-                    score += ratingToScore(rating);
+                score += ratingToScore(rating);
 
-                    if (note.type == 'note')
-                    {
-                        accuracyMod += ratingToAccuracy(rating);
-
-                        totalPlayed++;
-                    }
-                default:
+                if (note.type == 'note')
+                {
+                    accuracyMod += ratingToAccuracy(rating);
+                    
+                    totalPlayed++;
+                }
             }
-
             return null;
         };
 
-        strumLine.onMissNote = (note) -> {
-            switch (note.character.type)
+        strumLine.onMissNote = (note) ->
+        {
+            if (note.character.type == 'player')
             {
-                case 'player':
+                if (note.type == 'note')
+                {
                     health = health - note.missHealth;
 
                     misses++;
 
-                    if (note.type == 'note')
-                        totalPlayed++;
-                default:
+                    totalPlayed++;
+                }
             }
-
             return null;
         };
 
@@ -327,14 +383,10 @@ function ratingToAccuracy(rating:Rating):Float
 {
     return switch (cast rating)
     {
-        case 'sick':
-            100;
-        case 'good':
-            67;
-        case 'bad':
-            33;
-        case 'shit':
-            0;
+        case 'sick': 100;
+        case 'good': 67;
+        case 'bad': 33;
+        default: 0;
     };
 }
 
@@ -342,59 +394,50 @@ function ratingToScore(rating:Rating):Float
 {
     return switch (cast rating)
     {
-        case 'sick':
-            350;
-        case 'good':
-            200;
-        case 'bad':
-            100;
-        case 'shit':
-            50;
+        case 'sick': 350;
+        case 'good': 200;
+        case 'bad': 100;
+        case 'shit': 50;
+        default: 0;
     };
-}
-
-function onUpdate(elapsed:Float)
-{
-    icons.forEachAlive(
-        (icon) -> {
-            iconScale(icon);
-        }
-    );
-
-    scoreText.text = ClientPrefs.data.botplay ? 'BOTPLAY' : 'Score: ' + score + '    Misses: ' + misses + '    Accuracy: ' + CoolUtil.floorDecimal(accuracy, 2) + '%';
 }
 
 function addCharacter(character:Character)
 {
     switch (character.type)
     {
-        case 'opponent':
-            opponents.add(character);
-        case 'player':
-            players.add(character);
-        case 'extra':
-            extras.add(character);
+        case 'opponent': opponents.add(character);
+        case 'player': players.add(character);
+        case 'extra': extras.add(character);
+        default:
     }
 
     characters.add(character);
-
     add(character);
 }
 
-function addBehindOpponents(obj:FlxBasic)
+inline function addBehindOpponents(obj:FlxBasic)
     addBehindGroup(opponents, obj);
 
-function addBehindPlayers(obj:FlxBasic)
+inline function addBehindPlayers(obj:FlxBasic)
     addBehindGroup(players, obj);
 
-function addBehindExtras(obj:FlxBasic)
+inline function addBehindExtras(obj:FlxBasic)
     addBehindGroup(extras, obj);
 
-var addBehindDad:FlxBasic -> Void = this.addBehindOpponents;
-var addBehindBF:FlxBasic -> Void = this.addBehindPlayers;
-var addBehindGF:FlxBasic -> Void = this.addBehindExtras;
+inline function addBehindDad(obj:FlxBasic)
+    addBehindGroup(opponents, obj);
 
-var stageObjects:StringMap<FlxSprite> = new StringMap<FlxSprite>();
+inline function addBehindBF(obj:FlxBasic)
+    addBehindGroup(players, obj);
+
+inline function addBehindGF(obj:FlxBasic)
+    addBehindGroup(extras, obj);
+
+function addBehindGroup(group:FlxTypedGroup<Dynamic>, obj:FlxBasic)
+{
+    insert(members.indexOf(group.members[0]), obj);
+}
 
 function initStage()
 {
@@ -404,7 +447,11 @@ function initStage()
 
         for (object in config.objects)
         {
-            final obj:FlxSprite = Type.createInstance(Type.resolveClass(object.classPath ?? 'flixel.FlxSprite'), object.classArguments ?? []);
+            final obj:FlxSprite =
+                Type.createInstance(
+                    Type.resolveClass(object.classPath ?? 'flixel.FlxSprite'),
+                    object.classArguments ?? []
+                );
 
             obj.loadGraphic(Paths.image('stages/' + config.directory + '/' + (object.path ?? object.id)));
 
@@ -412,7 +459,7 @@ function initStage()
                 if (props != null)
                     CoolUtil.setMultiProperty(obj, props);
 
-            var addMethod:FlxBasic -> Dynamic = null;
+            var addMethod:FlxBasic->Dynamic = null;
 
             #if flixel
             addMethod = Reflect.getProperty(this, object.addMethod ?? 'addBehindExtras');
@@ -428,9 +475,6 @@ function initStage()
     }
 }
 
-function addBehindGroup(group:FlxTypedGroup, obj:FlxBasic)
-    insert(members.indexOf(group.members[0]), obj);
-
 function initControls()
 {
     FlxG.stage.addEventListener('keyDown', justPressedKey);
@@ -442,20 +486,12 @@ function justPressedKey(event:KeyboardEvent)
     if (FlxG.keys.firstJustPressed() <= -1)
         return;
 
-    strumLines.forEachAlive(
-        (strl) -> {
-            strl.justPressedKey(event.keyCode);
-        }
-    );
+    strumLines.forEachAlive(strl -> strl.justPressedKey(event.keyCode));
 }
 
 function justReleasedKey(event:KeyboardEvent)
 {
-    strumLines.forEachAlive(
-        (strl) -> {
-            strl.justReleasedKey(event.keyCode);
-        }
-    );
+    strumLines.forEachAlive(strl -> strl.justReleasedKey(event.keyCode));
 }
 
 function initSong()
@@ -465,103 +501,52 @@ function initSong()
     Conductor.bpm = SONG.bpm;
 }
 
-var camFollow:FlxObject;
-
 function initCamera()
 {
     camFollow = new FlxObject(1, 1, 0, 0);
-
     camGame.follow(camFollow);
-
     camGame.followLerp = 2.5 * STAGE.speed ?? 1;
-
     camGame.zoom = STAGE.zoom;
 }
 
-function onSectionHit(curSection:Int)
+function resyncVocals()
 {
-    final songSection:ALESongSection = SONG.sections[curSection];
+    if (FlxG.sound.music != null)
+        Conductor.songPosition = FlxG.sound.music.time;
 
-    if (songSection == null)
-        return;
-
-    final character:Character = cameraCharacters[songSection.camera[0]][songSection.camera[1]];
-
-    camFollow.x = character.getMidpoint().x + character.data.cameraPosition.x * (character.type == 'player' ? -1 : 1);
-    camFollow.y = character.getMidpoint().y + character.data.cameraPosition.y;
-
-    if (STAGE.cameraOffset != null)
-    {
-        var offset:Point;
-
-        if (STAGE.cameraOffset.type != null)
-            offset = Reflect.getProperty(STAGE.cameraOffset.type, cast character.type);
-
-        if (STAGE.cameraOffset.id != null)
-            offset = Reflect.getProperty(STAGE.cameraOffset.id, character.id);
-
-        if (offset != null)
+    for (vocal in vocalsToSync)
+        if (vocal != null)
         {
-            camFollow.x += offset.x ?? 0;
-            camFollow.y += offset.y ?? 0;
+            vocal.pause();
+            if (Conductor.songPosition <= vocal.length)
+                vocal.time = Conductor.songPosition;
+            vocal.play();
         }
-    }
-}
-
-function onBeatHit(curBeat:Int)
-{
-    characters.forEachAlive(
-        (char) -> {
-            char.dance();
-        }
-    );
-
-    icons.forEachAlive(
-        (icon) -> {
-            bopIcon(icon);
-        }
-    );
 }
 
 function bopIcon(icon:Icon)
 {
     icon.scale.x = icon.scale.y = 1.2;
     icon.updateHitbox();
-
-    iconPosition(icon);
+    iconPosition(icon, healthBar.getMiddle());
 }
 
 function iconScale(icon:Icon)
 {
     var mult:Float = CoolUtil.fpsLerp(icon.scale.x, 1, 0.3);
-
     icon.scale.x = icon.scale.y = mult;
     icon.updateHitbox();
-
-    icons.forEachAlive(
-        (icon) -> {
-            iconPosition(icon);
-        }
-    );
+    iconPosition(icon, healthBar.getMiddle());
 }
 
-function iconPosition(icon:Icon)
+function iconPosition(icon:Icon, barMiddle:FlxPoint)
 {
-    final barMiddle:Float = healthBar.getMiddle();
-
     final isRight:Bool = icon.type == 'player' == healthBar.rightToLeft;
-
     icon.x = isRight ? (barMiddle.x - icon.offsetX) : (barMiddle.x - icon.width + icon.offsetX);
     icon.y = barMiddle.y - icon.height / 2 + icon.offsetY;
 
     if (icon.flipX != isRight)
         icon.flipX = isRight;
-}
-
-function onDestroy()
-{
-    FlxG.stage.removeEventListener('keyDown', justPressedKey);
-    FlxG.stage.removeEventListener('keyUp', justReleasedKey);
 }
 
 // ------- ADRIANA SALTE -------

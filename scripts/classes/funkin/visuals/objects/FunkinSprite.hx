@@ -4,7 +4,9 @@ import haxe.ds.StringMap;
 
 import flixel.math.FlxAngle;
 
-// import core.structures.Point;
+/*
+import core.structures.Point;
+*/
 
 class FunkinSprite extends scripting.haxe.ScriptSprite
 {
@@ -36,10 +38,6 @@ class FunkinSprite extends scripting.haxe.ScriptSprite
             lastScaleY = scale.y;
 
             lastAngle = angle;
-
-            lastFlipX = flipX;
-
-            lastFlipY = flipY;
 
             applyOffset();
         }

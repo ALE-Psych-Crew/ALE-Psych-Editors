@@ -161,6 +161,9 @@ class ALEFormatter
     {
         var json:Dynamic = Paths.json('characters/' + char);
 
+        if (json == null)
+            return null;
+
         if (json.format == CHARACTER_FORMAT)
             return cast json;
 

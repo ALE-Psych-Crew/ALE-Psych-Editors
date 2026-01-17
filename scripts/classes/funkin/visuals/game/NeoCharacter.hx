@@ -4,9 +4,11 @@ import funkin.visuals.objects.FunkinSprite;
 
 import utils.ALEFormatter;
 
-//import core.structures.ALECharacter;
+/*
+import core.structures.ALECharacter;
 
-//import core.enums.CharacterType;
+import core.enums.CharacterType;
+*/
 
 class NeoCharacter extends FunkinSprite
 {
@@ -35,9 +37,14 @@ class NeoCharacter extends FunkinSprite
         if (type != null)
             this.type = type;
 
+        final jsonData:ALECharacter = ALEFormatter.getCharacter(id, this.type);
+
+        if (jsonData == null)
+            return;
+
         this.id = id;
 
-        data = ALEFormatter.getCharacter(id, this.type);
+        data = jsonData;
         
         scale.x = scale.y = data.scale;
 
@@ -48,6 +55,8 @@ class NeoCharacter extends FunkinSprite
         flipY = data.flipY;
 
         antialiasing = data.antialiasing;
+
+        offsets.clear();
         
         for (anim in data.animations)
         {

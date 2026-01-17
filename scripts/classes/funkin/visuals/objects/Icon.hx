@@ -2,7 +2,9 @@ package funkin.visuals.objects;
 
 import flixel.graphics.FlxGraphic;
 
-// import core.enums.CharacterType;
+/*
+import core.enums.CharacterType;
+*/
 
 class Icon extends scripting.haxe.ScriptSprite
 {

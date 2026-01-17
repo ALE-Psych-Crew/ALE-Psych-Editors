@@ -1,9 +1,11 @@
 package funkin.visuals.game;
 
+import funkin.visuals.shaders.RGBPalette;
 import funkin.visuals.shaders.RGBShaderReference;
 
-import flixel.math.FlxAngle;
+import funkin.visuals.game.NeoCharacter as Character;
 
+import flixel.math.FlxAngle;
 import flixel.math.FlxRect;
 
 /*
@@ -29,7 +31,7 @@ class NeoNote extends scripting.haxe.ScriptSprite
 
     public var miss:Bool = false;
 
-    public var parent:Note;
+    public var parent:NeoNote;
 
     public var character:Character;
 
@@ -75,6 +77,8 @@ class NeoNote extends scripting.haxe.ScriptSprite
         centerOffsets();
 
         x = data * space;
+
+        y = 2000;
         
 		textureShader = new RGBShaderReference(super, palette);
 

@@ -5,8 +5,8 @@ import flixel.math.FlxRect;
 
 class NeoBar extends scripting.haxe.ScriptSpriteGroup
 {
-    public var percent(default, set):Float;
-    function set_percent(value:Float):Float
+    public var percent(default, set):Null<Float>;
+    function set_percent(value:Float):Null<Float>
     {
         value = FlxMath.bound(value, 0, 100);
 

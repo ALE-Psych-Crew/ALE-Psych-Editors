@@ -4,18 +4,20 @@ import utils.ALEFormatter;
 
 import funkin.visuals.game.Strum;
 import funkin.visuals.game.Splash;
+import funkin.visuals.game.NeoCharacter as Character;
 import funkin.visuals.game.NeoNote as Note;
 
 import flixel.input.keyboard.FlxKey;
 
 import haxe.ds.GenericStack;
-import haxe.ds.ObjectMap;
+import haxe.ds.IntMap;
 
 import funkin.visuals.shaders.RGBPalette;
 
 /*
 import core.structures.ALEStrumLine;
 import core.structures.ALESongStrumLine;
+import core.structures.ALEStrum;
 
 import core.enums.CharacterType;
 import core.enums.Rating;
@@ -35,7 +37,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
     public var scrollSpeed:Float = 1;
 
-    public var inputMap:ObjectMap<FlxKey, Int> = new ObjectMap();
+    public var inputMap:IntMap<Int> = new IntMap();
 
     public final totalStrums:Int;
 
@@ -60,6 +62,8 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         return notesShader[data];
     }
 
+    public final type:CharacterType;
+
     public function new(chartData:ALESongStrumLine, arrayNotes:Array<Dynamic>, speed:Float, characters:Array<Character>, ?onStackNote:Note -> Dynamic, ?postStackNote:Note -> Void)
     {
         super();
@@ -70,7 +74,9 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
         visible = chartData.visible;
 
-        botplay = chartData.type != 'player' || ClientPrefs.data.botplay;
+        type = chartData.type;
+
+        botplay = type != 'player' || ClientPrefs.data.botplay;
 
         add(strums = new FlxTypedSpriteGroup<Strum>());
         
@@ -124,7 +130,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
             final note:Note = new Note(strumConfig, time, data, length, type, 'note', space, scale, textures, getNoteShader(strumConfig.shader, data), character);
 
-            final parent:Note = note;
+            var parent:Note = note;
 
             tempNotes.push(note);
 
@@ -142,7 +148,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
                     sustain.flipY = ClientPrefs.data.downScroll;
 
                     if (i != floorLength)
-                        sustain.setGraphicSize(sustain.width, crochet * speed * 0.46);
+                        sustain.setGraphicSize(sustain.width, crochet * speed * 0.455);
                     
                     sustain.updateHitbox();
 
@@ -165,7 +171,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
         for (note in tempNotes)
         {
-            final callbackResult:Note = onStackNote == null ? null : onStackNote(note);
+            final callbackResult:Dynamic = onStackNote == null ? null : onStackNote(note);
             
             if (callbackResult != CoolVars.Function_Stop)
             {
@@ -200,7 +206,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         if (botplay)
             return;
 
-        var strumIndex:Int = inputMap.get(key);
+        var strumIndex:Null<Int> = inputMap.get(key);
 
         if (strumIndex != null)
         {
@@ -214,7 +220,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         if (botplay)
             return;
 
-        var strumIndex:Int = inputMap.get(key);
+        var strumIndex:Null<Int> = inputMap.get(key);
 
         if (strumIndex != null)
         {
@@ -426,7 +432,6 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         keyPressed = null;
         keyJustReleased = null;
         keyJustPressed = null;
-        inputsArray = null;
 
         super.destroy();
     }
