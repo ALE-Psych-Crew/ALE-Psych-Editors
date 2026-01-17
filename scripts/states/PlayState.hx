@@ -51,7 +51,7 @@ var camFollow:FlxObject;
 
 var stageObjects:StringMap<FlxSprite> = new StringMap<FlxSprite>();
 
-final vocalsToSync:Array<FlxSound> = [];
+final vocals:Array<FlxSound> = [];
 
 var score:Float = 0;
 var totalPlayed:Int = 0;
@@ -91,9 +91,23 @@ function get_accuracy():Float
 
 function new(?song:String, ?difficulty:String)
 {
-    SONG ??= ALEFormatter.getSong(song ?? 'bopeebo', difficulty ?? 'hard');
+    song ??= 'dad-battle';
+    difficulty ??= 'hard';
+
+    SONG ??= ALEFormatter.getSong(song, difficulty);
     STAGE ??= ALEFormatter.getStage(SONG.stage);
-    instSound = Paths.voices('songs/' + (song ?? 'bopeebo'));
+
+    instSound = Paths.inst('songs/' + (song));
+    
+    for (path in [''])
+    {
+        var sound:FlxSound = new FlxSound().loadEmbedded(Paths.voices('songs/' + song, path));
+        add(sound);
+
+        FlxG.sound.list.add(sound);
+
+        vocals.push(sound);
+    }
 }
 
 function set_botplay(value:Bool):Bool
@@ -123,8 +137,15 @@ function onCreate()
     initControls();
     initCamera();
     initHud();
+    initMusic();
+}
 
-    FlxG.sound.playMusic(instSound, 1, false);
+function initMusic()
+{
+    for (sound in vocals)
+        sound.play(sound);
+
+    FlxG.sound.playMusic(instSound, 0.75, false);
 }
 
 function onUpdate(elapsed:Float)
@@ -182,7 +203,7 @@ function onStepHit()
         final timeSub:Float = Conductor.songPosition - Conductor.offset;
         final syncTime:Float = 20;
 
-        for (audio in [FlxG.sound.music].concat(vocalsToSync))
+        for (audio in [FlxG.sound.music].concat(vocals))
         {
             if (audio != null && audio.length > 0)
             {
@@ -352,7 +373,7 @@ function initStrumLines()
                 if (note.type == 'note')
                 {
                     accuracyMod += ratingToAccuracy(rating);
-                    
+
                     totalPlayed++;
                 }
             }
@@ -514,7 +535,7 @@ function resyncVocals()
     if (FlxG.sound.music != null)
         Conductor.songPosition = FlxG.sound.music.time;
 
-    for (vocal in vocalsToSync)
+    for (vocal in vocals)
         if (vocal != null)
         {
             vocal.pause();
@@ -558,7 +579,7 @@ function onHotReloadingConfig()
             addHotReloadingFile('scripts/classes/' + pack.replace('.', '/') + '/' + file);
 }
 
-if (true)
+if (false)
 {
     final window:Window = Application.current.window;
 
