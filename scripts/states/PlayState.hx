@@ -18,6 +18,8 @@ import funkin.visuals.game.NeoCharacter as Character;
 import funkin.visuals.objects.NeoBar as Bar;
 import funkin.visuals.objects.Icon;
 
+import funkin.visuals.FXCamera;
+
 //import core.structures.ALESong;
 //import core.structures.ALESongSection;
 
@@ -135,7 +137,7 @@ public function calculateBPMChanges(?song:Null<ALESong>)
 
 function new(?song:String, ?difficulty:String)
 {
-    song ??= 'satin-panties';
+    song ??= 'bopeebo';
     difficulty ??= 'hard';
 
     SONG ??= ALEFormatter.getSong(song, difficulty);
@@ -173,15 +175,17 @@ function set_health(value:Float):Float
     return health;
 }
 
+var camGame:FXCamera;
+
 function onCreate()
 {
     ClientPrefs.data.downScroll = true;
     ClientPrefs.data.botplay = false;
 
+    initCamera();
     initSong();
     initStage();
     initControls();
-    initCamera();
     initHud();
     initMusic();
 }
@@ -221,8 +225,8 @@ function onSectionHit()
 
     final character:Character = cameraCharacters[songSection.camera[0]][songSection.camera[1]];
 
-    camFollow.x = character.getMidpoint().x + character.data.cameraPosition.x * (character.type == 'player' ? -1 : 1);
-    camFollow.y = character.getMidpoint().y + character.data.cameraPosition.y;
+    camGame.position.x = character.getMidpoint().x + character.data.cameraPosition.x * (character.type == 'player' ? -1 : 1);
+    camGame.position.y = character.getMidpoint().y + character.data.cameraPosition.y;
 
     if (STAGE.cameraOffset != null)
     {
@@ -236,8 +240,8 @@ function onSectionHit()
 
         if (offset != null)
         {
-            camFollow.x += offset.x ?? 0;
-            camFollow.y += offset.y ?? 0;
+            camGame.position.x += offset.x ?? 0;
+            camGame.position.y += offset.y ?? 0;
         }
     }
 }
@@ -256,6 +260,7 @@ function onStepHit()
                 if (Math.abs(audio.time - timeSub) > syncTime)
                 {
                     resyncVocals();
+
                     break;
                 }
             }
@@ -263,10 +268,13 @@ function onStepHit()
     }
 }
 
-function onBeatHit()
+function onBeatHit(curBeat:Int)
 {
     characters.forEachAlive(char -> char.dance());
     icons.forEachAlive(icon -> bopIcon(icon));
+
+    for (camera in [camGame, camHUD])
+        camera.bop(curBeat);
 }
 
 function onDestroy()
@@ -572,10 +580,21 @@ function initSong()
 
 function initCamera()
 {
-    camFollow = new FlxObject(1, 1, 0, 0);
-    camGame.follow(camFollow);
-    camGame.followLerp = 2.5 * STAGE.speed ?? 1;
-    camGame.zoom = STAGE.zoom;
+    camGame = new FXCamera(STAGE.speed ?? 1);
+    camGame.zoomSpeed = 1;
+    camGame.bopModulo = 4;
+    camGame.targetZoom = STAGE.zoom;
+
+    FlxG.cameras.reset(camGame);
+        
+    camHUD = new FXCamera();
+    camHUD.zoomSpeed = 1;
+    camHUD.bopModulo = 4;
+    camHUD.bopZoom = 2;
+    
+    FlxG.cameras.add(camHUD, false);
+
+    camGame.tweenZoom(0.5, 5, {ease: FlxEase.backInOut});
 }
 
 function resyncVocals()
@@ -587,8 +606,10 @@ function resyncVocals()
         if (vocal != null)
         {
             vocal.pause();
+
             if (Conductor.songPosition <= vocal.length)
                 vocal.time = Conductor.songPosition;
+            
             vocal.play();
         }
 }
@@ -622,7 +643,7 @@ function iconPosition(icon:Icon, barMiddle:FlxPoint)
 
 function onHotReloadingConfig()
 {
-    for (pack in ['utils', 'funkin.visuals.game', 'funkin.visuals.objects'])
+    for (pack in ['utils', 'funkin.visuals.game', 'funkin.visuals.objects', 'funkin.visuals'])
         for (file in Paths.readDirectory('scripts/classes/' + pack.replace('.', '/')))
             addHotReloadingFile('scripts/classes/' + pack.replace('.', '/') + '/' + file);
 }
