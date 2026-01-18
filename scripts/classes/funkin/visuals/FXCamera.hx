@@ -92,7 +92,7 @@ class FXCamera extends scripting.haxe.ScriptALECamera
 	public function tweenZoom(newZoom:Float, ?duration:Float, ?options:TweenOptions, ?permanent:Bool)
 	{
 		_zoomTween = safeUniqueTween(_zoomTween, zoom, newZoom, (val) -> {
-			if (permanent)
+			if (permanent ?? true)
 				targetZoom = val;
 
 			zoom = val;
