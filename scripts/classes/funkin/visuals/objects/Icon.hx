@@ -63,6 +63,9 @@ class Icon extends scripting.haxe.ScriptSprite
                     animation.add(anim.animation, anim.frames, anim.framerate, anim.loop, anim.flipX);
         }
 
+        offsetX = data.offset.x;
+        offsetY = data.offset.y;
+
         flipX = type != 'player' == data.flipX;
 
         flipY = data.flipY;

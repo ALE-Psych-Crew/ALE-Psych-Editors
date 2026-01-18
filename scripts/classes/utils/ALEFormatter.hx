@@ -327,11 +327,15 @@ class ALEFormatter
                 x: 1.2,
                 y: 1.2
             },
+            offset: {
+                x: 20,
+                y: 0
+            },
             bopModulo: 1,
             lerp: 0.33,
-            format: ICON_FORMAT,
             flipX: false,
-            flipY: false
+            flipY: false,
+            format: ICON_FORMAT
         };
     }
 }

@@ -293,12 +293,10 @@ function initHud()
 
     playerIcon = new Icon('player');
     playerIcon.cameras = [camHUD];
-    playerIcon.offsetX = 20;
     addIcon(playerIcon);
 
     opponentIcon = new Icon('opponent');
     opponentIcon.cameras = [camHUD];
-    opponentIcon.offsetX = 20;
     addIcon(opponentIcon);
 
     if (dad != null)
