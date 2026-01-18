@@ -140,17 +140,12 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
                 for (i in 0...(floorLength + 1))
                 {
-                    final sustain:Note = new Note(strumConfig, time + i * crochet, data, crochet, type, i == floorLength ? 'end' : 'sustain', space, scale, textures, getNoteShader(strumConfig.shader, data), character);
+                    final sustain:Note = new Note(strumConfig, time + i * crochet, data, crochet, type, i == floorLength ? 'end' : 'sustain', space, scale, textures, getNoteShader(strumConfig.shader, data), character, i == floorLength ? null : crochet * 0.455, i == floorLength ? null : speed);
                     sustain.offsetY = strum.height / 2;
                     sustain.offsetX = strum.width / 2 - sustain.width / 2;
                     sustain.parent = parent;
                     sustain.multAlpha = 0.5;
                     sustain.flipY = ClientPrefs.data.downScroll;
-
-                    if (i != floorLength)
-                        sustain.setGraphicSize(sustain.width, crochet * speed * 0.455);
-                    
-                    sustain.updateHitbox();
 
                     tempNotes.push(sustain);
 
@@ -299,6 +294,10 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
                 if (note.timeDistance < -shitWindow && !note.miss && !note.hit)
                     missNote(note);
             }
+
+            if (note.type == 'sustain')
+                if (note.sustainSpeed != scrollSpeed)
+                    note.sustainSpeed = scrollSpeed;
 
             if (note.timeDistance < -despawnWindow)
                 removeNote(note);

@@ -135,6 +135,23 @@ public function calculateBPMChanges(?song:Null<ALESong>)
     Conductor.bpm = song.bpm;
 }
 
+function set_botplay(value:Bool):Bool
+{
+    botplay = value;
+
+    for (strl in strumLines)
+        strl.botplay = strl.type != 'player' || botplay;
+
+    return botplay;
+}
+
+function set_health(value:Float):Float
+{
+    health = FlxMath.bound(value, 0, 2);
+    updateHealth();
+    return health;
+}
+
 function new(?song:String, ?difficulty:String)
 {
     song ??= 'bopeebo';
@@ -158,29 +175,22 @@ function new(?song:String, ?difficulty:String)
     }
 }
 
-function set_botplay(value:Bool):Bool
+var curTime:Float = 0;
+
+function postUpdate(elapsed:Float)
 {
-    botplay = value;
+    curTime += elapsed;
 
     for (strl in strumLines)
-        strl.botplay = strl.type != 'player' || botplay;
-
-    return botplay;
-}
-
-function set_health(value:Float):Float
-{
-    health = FlxMath.bound(value, 0, 2);
-    updateHealth();
-    return health;
+        strl.scrollSpeed = Math.sin(curTime) * 2.5 + 3;
 }
 
 var camGame:FXCamera;
 
 function onCreate()
 {
-    ClientPrefs.data.downScroll = true;
-    ClientPrefs.data.botplay = false;
+    ClientPrefs.data.downScroll = false;
+    ClientPrefs.data.botplay = true;
 
     initCamera();
     initSong();
@@ -352,27 +362,29 @@ function initStrumLines()
 
     Conductor.bpm = SONG.bpm;
 
-    #if flixel
-    for (section in SONG.sections)
+    if (true)
     {
-        if (section.changeBPM)
-            Conductor.bpm = section.bpm;
-
-        for (note in section.notes)
+        for (section in SONG.sections)
         {
-            notes[note[4][0]] ??= [];
-            notes[note[4][0]].push([
-                note[0],
-                note[1],
-                note[2],
-                note[3],
-                note[4][1],
-                Conductor.stepCrochet
-            ]);
+            if (section.changeBPM)
+                Conductor.bpm = section.bpm;
+
+            for (note in section.notes)
+            {
+                notes[note[4][0]] ??= [];
+                notes[note[4][0]].push([
+                    note[0],
+                    note[1],
+                    note[2],
+                    note[3],
+                    note[4][1],
+                    Conductor.stepCrochet
+                ]);
+            }
         }
+
+        Conductor.bpm = SONG.bpm;
     }
-    Conductor.bpm = SONG.bpm;
-    #end
 
     characters = new FlxTypedGroup<Character>();
     opponents = new FlxTypedGroup<Character>();
@@ -646,7 +658,7 @@ function onHotReloadingConfig()
             addHotReloadingFile('scripts/classes/' + pack.replace('.', '/') + '/' + file);
 }
 
-if (false)
+if (true)
 {
     final window:Window = Application.current.window;
 

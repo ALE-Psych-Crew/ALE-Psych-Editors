@@ -38,7 +38,29 @@ class NeoNote extends scripting.haxe.ScriptSprite
     public var singAnimation:String;
     public var missAnimation:String;
 
-    public function new(config:ALEStrum, time:Float, data:Int, length:Float, noteType:String, type:NoteType, space:Float, scale:Float, skins:Array<String>, palette:RGBPalette, character:Character)
+    public var sustainHeight(default, set):Float;
+    function set_sustainHeight(value:Float):Float
+    {
+        sustainHeight = value;
+
+        sustainSpeed = sustainSpeed;
+
+        return sustainHeight;
+    }
+
+    public var sustainSpeed(default, set):Float;
+    function set_sustainSpeed(value:Float)
+    {
+        sustainSpeed = value;
+
+        setGraphicSize(width, sustainHeight * sustainSpeed);
+                    
+        updateHitbox();
+
+        return sustainSpeed;
+    }
+
+    public function new(config:ALEStrum, time:Float, data:Int, length:Float, noteType:String, type:NoteType, space:Float, scale:Float, skins:Array<String>, palette:RGBPalette, character:Character, ?sustainHeight:Float, ?speed:Float)
     {
         super();
 
@@ -85,6 +107,12 @@ class NeoNote extends scripting.haxe.ScriptSprite
         allowShader = config.shader != null;
 
         multSpeed = 1;
+
+        if (sustainHeight != null)
+            this.sustainHeight = sustainHeight;
+
+        if (sustainSpeed != null)
+            this.sustainSpeed = sustainSpeed;
     }
 
     public var multSpeed(default, set):Float;
@@ -125,7 +153,7 @@ class NeoNote extends scripting.haxe.ScriptSprite
 
     public var multAlpha:Float = 1;
 
-    public final speedMult:Float = ClientPrefs.data.downScroll ? -0.45 : 0.45;
+    public final speedMult:Float = ClientPrefs.data.downScroll ? -0.455 : 0.455;
 
     public var timeDistance:Float = 0;
 
