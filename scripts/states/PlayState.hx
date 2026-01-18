@@ -593,10 +593,6 @@ function initCamera()
     camHUD.bopZoom = 2;
     
     FlxG.cameras.add(camHUD, false);
-
-    camGame.tweenZoom(0.5, 5, {ease: FlxEase.backInOut});
-
-    camHUD.tweenZoom(0.75, 5, {ease: FlxEase.backInOut});
 }
 
 function resyncVocals()
@@ -650,7 +646,7 @@ function onHotReloadingConfig()
             addHotReloadingFile('scripts/classes/' + pack.replace('.', '/') + '/' + file);
 }
 
-if (true)
+if (false)
 {
     final window:Window = Application.current.window;
 

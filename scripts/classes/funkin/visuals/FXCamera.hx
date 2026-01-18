@@ -106,6 +106,13 @@ class FXCamera extends scripting.haxe.ScriptALECamera
 		_speedTween = safeUniqueTween(_speedTween, speed, newSpeed, (val) -> { speed = val; }, () -> { _speedTween = null; }, duration, options);
 	}
 
+	var _zoomSpeedTween:FlxTween = null;
+
+	public function tweenZoomSpeed(newZoomSpeed:Float, ?duration:Float, ?options:TweenOptions)
+	{
+		_zoomSpeedTween = safeUniqueTween(_zoomSpeedTween, zoomSpeed, newZoomSpeed, (val) -> { zoomSpeed = val; }, () -> { _zoomSpeedTween = null; }, duration, options);
+	}
+
 	inline function safeUniqueTween(initTween:Null<FlxTween>, startValue:Float, endValue:Float, updateFunc:Float -> Void, endFunc:Void -> Void, ?duration:Float, ?options:TweenOptions):FlxTween
 	{
 		if (initTween != null)
