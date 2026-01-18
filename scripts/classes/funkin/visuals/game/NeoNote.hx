@@ -153,7 +153,7 @@ class NeoNote extends scripting.haxe.ScriptSprite
 
     public var multAlpha:Float = 1;
 
-    public final speedMult:Float = ClientPrefs.data.downScroll ? -0.455 : 0.455;
+    public final speedMult:Float = ClientPrefs.data.downScroll ? -0.45 : 0.45;
 
     public var timeDistance:Float = 0;
 
