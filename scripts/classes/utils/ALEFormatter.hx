@@ -10,6 +10,7 @@ import core.structures.ALECharacter;
 import core.structures.PsychCharacter;
 import core.structures.ALEStage;
 import core.structures.PsychStage;
+import core.structures.ALEIcon;
 
 import core.enums.CharacterType;
 */
@@ -278,8 +279,59 @@ class ALEFormatter
         };
     }
 
+    public static final STRUMLINE_FORMAT:String = 'ale-strumline-v0.1';
+
     public static function getStrumLine(strl:String):ALEStrumLine
     {
-        return cast Paths.json('strumLines/' + strl);
+        final json:Dynamic = Paths.json('strumLines/' + strl);
+
+        if (json != null && json.format == STRUMLINE_FORMAT)
+            return cast json;
+
+        return null;
+    }
+
+    public static final ICON_FORMAT:String = 'ale-icon-v0.1';
+
+    public static function getIcon(id:String):ALEIcon
+    {
+        final json:Dynamic = Paths.json('images/icons/' + id, false, false);
+
+        if (json != null && json.format == ICON_FORMAT)
+            return cast json;
+
+        return {
+            texture: id,
+            animationType: "frames",
+            animations: [
+                {
+                    percent: 0,
+                    animation: 'lose',
+                    frames: [1],
+                    framerate: 0,
+                    loop: false
+                },
+                {
+                    percent: 20,
+                    animation: 'neutral',
+                    frames: [0],
+                    framerate: 0,
+                    loop: false
+                }
+            ],
+            scale: {
+                x: 1,
+                y: 1
+            },
+            bopScale: {
+                x: 1.2,
+                y: 1.2
+            },
+            bopModulo: 1,
+            lerp: 0.33,
+            format: ICON_FORMAT,
+            flipX: false,
+            flipY: false
+        };
     }
 }

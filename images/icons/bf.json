@@ -1,0 +1,47 @@
+{
+	"bopModulo": 1,
+	"flipX": true,
+	"texture": "bf",
+	"flipY": false,
+	"animationType": "sheet",
+	"animations": [
+		{
+			"loop": false,
+			"animation": "left",
+			"framerate": 24,
+			"percent": 0,
+			"prefix": "BF NOTE LEFT0"
+		},
+		{
+			"loop": false,
+			"animation": "down",
+			"framerate": 24,
+			"percent": 25,
+			"prefix": "BF NOTE DOWN0"
+		},
+		{
+			"loop": false,
+			"animation": "up",
+			"framerate": 24,
+			"percent": 50,
+			"prefix": "BF NOTE UP0"
+		},
+		{
+			"loop": false,
+			"animation": "right",
+			"framerate": 24,
+			"percent": 75,
+			"prefix": "BF NOTE RIGHT0"
+		}
+	],
+	"scale": {
+		"x": 0.3,
+		"y": 0.3
+	},
+	"bopScale": {
+		"x": 0.6,
+		"y": 0.15
+	},
+	"lerp": 0.25,
+	"format": "ale-icon-v0.1"
+}

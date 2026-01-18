@@ -175,16 +175,6 @@ function new(?song:String, ?difficulty:String)
     }
 }
 
-var curTime:Float = 0;
-
-function postUpdate(elapsed:Float)
-{
-    curTime += elapsed;
-
-    for (strl in strumLines)
-        strl.scrollSpeed = Math.sin(curTime) * 2.5 + 3;
-}
-
 var camGame:FXCamera;
 
 function onCreate()
@@ -212,8 +202,6 @@ function onUpdate(elapsed:Float)
 {
     if (FlxG.sound.music.playing)
         Conductor.songPosition += elapsed * 1000;
-
-    icons.forEachAlive(icon -> iconScale(icon));
 
     scoreText.text = ClientPrefs.data.botplay
         ? 'BOTPLAY'
@@ -281,7 +269,8 @@ function onStepHit()
 function onBeatHit(curBeat:Int)
 {
     characters.forEachAlive(char -> char.dance());
-    icons.forEachAlive(icon -> bopIcon(icon));
+
+    icons.forEachAlive(icon -> icon.bop(curBeat));
 
     for (camera in [camGame, camHUD])
         camera.bop(curBeat);
@@ -339,27 +328,35 @@ function initHud()
 
 function addIcon(icon:Icon)
 {
+    icon.bar = healthBar;
+
     icons.add(icon);
+
     add(icon);
 }
 
 function updateHealth()
 {
     healthBar.percent = health * 50;
-    final barMiddle:FlxPoint = healthBar.getMiddle();
-    icons.forEachAlive(icon -> iconPosition(icon, barMiddle));
 
     if (health <= 0)
     {
         FlxG.sound.music.pause();
+
         CoolUtil.openSubState(new CustomSubState(CoolVars.data.gameOverScreen));
     }
+}
+
+function postUpdate()
+{
+    health = Math.sin(Conductor.songPosition / 500) * 0.9 + 1;
 }
 
 function initStrumLines()
 {
     final notes:Array<Array<Dynamic>> = [];
 
+    /*
     Conductor.bpm = SONG.bpm;
 
     if (true)
@@ -385,6 +382,9 @@ function initStrumLines()
 
         Conductor.bpm = SONG.bpm;
     }
+    */
+
+    Conductor.bpm = SONG.bpm;
 
     characters = new FlxTypedGroup<Character>();
     opponents = new FlxTypedGroup<Character>();
@@ -624,24 +624,10 @@ function resyncVocals()
         }
 }
 
-function bopIcon(icon:Icon)
-{
-    icon.scale.x = icon.scale.y = 1.2;
-    icon.updateHitbox();
-    iconPosition(icon, healthBar.getMiddle());
-}
-
-function iconScale(icon:Icon)
-{
-    var mult:Float = CoolUtil.fpsLerp(icon.scale.x, 1, 0.3);
-    icon.scale.x = icon.scale.y = mult;
-    icon.updateHitbox();
-    iconPosition(icon, healthBar.getMiddle());
-}
-
-function iconPosition(icon:Icon, barMiddle:FlxPoint)
+function updateIconsPosition()
 {
     final isRight:Bool = icon.type == 'player' == healthBar.rightToLeft;
+
     icon.x = isRight ? (barMiddle.x - icon.offsetX) : (barMiddle.x - icon.width + icon.offsetX);
     icon.y = barMiddle.y - icon.height / 2 + icon.offsetY;
 
