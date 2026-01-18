@@ -86,16 +86,14 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
         var inputs = ClientPrefs.controls.notes;
 
-        var inputsArray:Array<Array<FlxKey>> = [inputs.left, inputs.down, inputs.up, inputs.right];
-
-        for (arrayIndex => array in inputsArray)
-            for (key in array)
-                inputMap.set(key, arrayIndex);
+        var inputsArray:Array<Array<FlxKey>> = [];
 
         var strumHeight:Float = 0;
 
         for (strumIndex => strumConfig in config.strums)
         {
+            inputsArray.push(CoolUtil.getControl(strumConfig.keybind[0], strumConfig.keybind[1]));
+
             final strum:Strum = new Strum(strumConfig, strumIndex, config.strumFramerate, config.strumTextures, config.strumScale, config.space);
             strums.add(strum);
             strum.returnToIdle = botplay;
@@ -105,6 +103,10 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
             strumHeight = Math.max(strumHeight, strum.height);
         }
+
+        for (arrayIndex => array in inputsArray)
+            for (key in array)
+                inputMap.set(key, arrayIndex);
 
         x = chartData.rightToLeft ? config.position.x : FlxG.width - config.position.x - (config.strums.length - 1) * config.space - strums.members[strums.members.length - 1].width;
         y = ClientPrefs.data.downScroll ? FlxG.height - config.position.y - strumHeight : config.position.y;

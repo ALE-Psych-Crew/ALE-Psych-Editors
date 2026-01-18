@@ -27,6 +27,29 @@ import funkin.visuals.FXCamera;
 
 using StringTools;
 
+// ------- ADRIANA SALTE -------
+
+function onHotReloadingConfig()
+{
+    for (pack in ['utils', 'funkin.visuals.game', 'funkin.visuals.objects', 'funkin.visuals'])
+        for (file in Paths.readDirectory('scripts/classes/' + pack.replace('.', '/')))
+            addHotReloadingFile('scripts/classes/' + pack.replace('.', '/') + '/' + file);
+}
+
+if (true)
+{
+    final window:Window = Application.current.window;
+
+    final screenSize:FlxPoint = FlxPoint.get(1920, 1080);
+
+    window.width = screenSize.x / 2 * 0.9;
+    window.height = screenSize.y / 2 * 0.9;
+    window.x = screenSize.x / 4 - window.width / 2;
+    window.y = screenSize.y / 4 - window.height / 2 + 40;
+}
+
+// ------- ADRIANA SALTE -------
+
 var SONG:ALESong;
 var STAGE:ALEStage;
 
@@ -180,7 +203,7 @@ var camGame:FXCamera;
 function onCreate()
 {
     ClientPrefs.data.downScroll = false;
-    ClientPrefs.data.botplay = true;
+    ClientPrefs.data.botplay = false;
 
     initCamera();
     initSong();
@@ -343,11 +366,6 @@ function updateHealth()
 
         CoolUtil.openSubState(new CustomSubState(CoolVars.data.gameOverScreen));
     }
-}
-
-function postUpdate()
-{
-    health = Math.sin(Conductor.songPosition / 500) * 0.9 + 1;
 }
 
 function initStrumLines()
@@ -631,25 +649,4 @@ function updateIconsPosition()
 
     if (icon.flipX != isRight)
         icon.flipX = isRight;
-}
-
-// ------- ADRIANA SALTE -------
-
-function onHotReloadingConfig()
-{
-    for (pack in ['utils', 'funkin.visuals.game', 'funkin.visuals.objects', 'funkin.visuals'])
-        for (file in Paths.readDirectory('scripts/classes/' + pack.replace('.', '/')))
-            addHotReloadingFile('scripts/classes/' + pack.replace('.', '/') + '/' + file);
-}
-
-if (true)
-{
-    final window:Window = Application.current.window;
-
-    final screenSize:FlxPoint = FlxPoint.get(1920, 1080);
-
-    window.width = screenSize.x / 2 * 0.9;
-    window.height = screenSize.y / 2 * 0.9;
-    window.x = screenSize.x / 4 - window.width / 2;
-    window.y = screenSize.y / 4 - window.height / 2 + 40;
 }

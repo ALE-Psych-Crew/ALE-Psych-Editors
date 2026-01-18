@@ -25,7 +25,11 @@
                 "note splash purple 2"
             ],
             "sing": "singLEFT",
-            "miss": "singLEFTmiss"
+            "miss": "singLEFTmiss",
+            "keybind": [
+                "notes",
+                "left"
+            ]
         },
         {
             "idle": "arrowDOWN",
@@ -44,7 +48,11 @@
                 "note splash blue 2"
             ],
             "sing": "singDOWN",
-            "miss": "singDOWNmiss"
+            "miss": "singDOWNmiss",
+            "keybind": [
+                "notes",
+                "down"
+            ]
         },
         {
             "idle": "arrowUP",
@@ -63,7 +71,11 @@
                 "note splash green 2"
             ],
             "sing": "singUP",
-            "miss": "singUPmiss"
+            "miss": "singUPmiss",
+            "keybind": [
+                "notes",
+                "up"
+            ]
         },
         {
             "idle": "arrowRIGHT",
@@ -82,7 +94,11 @@
                 "note splash red 2"
             ],
             "sing": "singRIGHT",
-            "miss": "singRIGHTmiss"
+            "miss": "singRIGHTmiss",
+            "keybind": [
+                "notes",
+                "right"
+            ]
         }
     ],
     "strumFramerate": 24,
