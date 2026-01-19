@@ -8,20 +8,20 @@ import flixel.math.FlxAngle;
 import core.structures.Point;
 */
 
-class FunkinSprite extends scripting.haxe.ScriptSprite
+class FunkinSprite extends scripting.haxe.ScriptAnimate
 {
     public var offsets:StringMap<Point> = new StringMap();
 
-    public function playAnim(anim:String, ?force:Bool)
+    public function playAnim(animation:String, ?force:Bool)
     {
-        animation.play(anim, force ?? true);
+        anim.play(animation, force ?? true);
 
         applyOffset(getAnimOffset());
     }
 
     public function getAnimOffset():Point
     {
-        return offsets.get(animation.name) ?? {x: 0, y: 0};
+        return offsets.get(anim.name) ?? {x: 0, y: 0};
     }
 
     var lastScaleX:Float = 1;

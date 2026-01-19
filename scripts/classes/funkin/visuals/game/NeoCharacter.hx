@@ -22,7 +22,7 @@ class NeoCharacter extends FunkinSprite
 
         change(initial);
 
-        animation.onFinish.add((name) -> {
+        anim.onFinish.add((name) -> {
             if (offsets.exists(name + '-loop'))
                 playAnim(name + '-loop');
         });
@@ -48,8 +48,6 @@ class NeoCharacter extends FunkinSprite
         
         scale.x = scale.y = data.scale;
 
-        frames = Paths.getMultiAtlas(data.textures);
-
         flipX = data.flipX != (this.type == 'player');
 
         flipY = data.flipY;
@@ -57,15 +55,38 @@ class NeoCharacter extends FunkinSprite
         antialiasing = data.antialiasing;
 
         offsets.clear();
-        
-        for (anim in data.animations)
-        {
-            if (anim.indices != null && anim.indices.length > 0)
-                animation.addByIndices(anim.animation, anim.prefix, anim.indices, '', anim.framerate, anim.loop);
-            else
-                animation.addByPrefix(anim.animation, anim.prefix, anim.framerate, anim.loop);
 
-            offsets.set(anim.animation, anim.offset);
+        switch (data.type)
+        {
+            case 'sheet':
+                frames = Paths.getMultiAtlas(data.textures);
+
+            case 'map':
+                frames = Paths.getAnimateAtlas(data.textures[0]);
+
+            default:
+        }
+
+        for (animData in data.animations)
+        {
+            switch (data.type)
+            {
+                case 'sheet':
+                    if (animData.indices != null && animData.indices.length > 0)
+                        anim.addByIndices(animData.animation, animData.prefix, animData.indices, '', animData.framerate, animData.loop);
+                    else
+                        anim.addByPrefix(animData.animation, animData.prefix, animData.framerate, animData.loop);
+
+                case 'map':
+                    if (animData.indices != null && animData.indices.length > 0)
+                        anim.addByFrameLabelIndices(animData.animation, animData.prefix, animData.indices, animData.framerate, animData.loop);
+                    else
+                        anim.addByFrameLabel(animData.animation, animData.prefix, animData.framerate, animData.loop);
+
+                default:
+            }
+
+            offsets.set(animData.animation, animData.offset);
         }
 
         if (offsets.exists('danceLeft') && offsets.exists('danceRight'))

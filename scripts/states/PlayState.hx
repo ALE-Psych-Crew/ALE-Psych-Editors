@@ -25,6 +25,10 @@ import funkin.visuals.FXCamera;
 
 //import core.structures.Point;
 
+import funkin.visuals.objects.FunkinSprite;
+
+import animate.FlxAnimateFrames;
+
 using StringTools;
 
 // ------- ADRIANA SALTE -------
@@ -203,7 +207,7 @@ var camGame:FXCamera;
 function onCreate()
 {
     ClientPrefs.data.downScroll = false;
-    ClientPrefs.data.botplay = false;
+    ClientPrefs.data.botplay = true;
 
     initCamera();
     initSong();
@@ -211,6 +215,15 @@ function onCreate()
     initControls();
     initHud();
     initMusic();
+
+    dad.change('sserafim-yunjin');
+    dad.x -= 300;
+    debugTrace(dad.anim.getNameList());
+    
+    boyfriend.change('sserafim-sakura');
+    boyfriend.y -= 300;
+
+    gf.change('sserafim-gf');
 }
 
 function initMusic()
@@ -303,6 +316,8 @@ function onDestroy()
 {
     FlxG.stage.removeEventListener('keyDown', justPressedKey);
     FlxG.stage.removeEventListener('keyUp', justReleasedKey);
+
+    FlxG.sound.music?.pause();
 }
 
 function initHud()
@@ -372,7 +387,6 @@ function initStrumLines()
 {
     final notes:Array<Array<Dynamic>> = [];
 
-    /*
     Conductor.bpm = SONG.bpm;
 
     if (true)
@@ -398,7 +412,6 @@ function initStrumLines()
 
         Conductor.bpm = SONG.bpm;
     }
-    */
 
     Conductor.bpm = SONG.bpm;
 

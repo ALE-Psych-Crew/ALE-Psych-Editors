@@ -168,9 +168,62 @@ class ALEFormatter
         if (json.format == CHARACTER_FORMAT)
             return cast json;
 
-        var psychJson:PsychCharacter = cast json;
+        if (json.version == "1.0.0")
+        {
+            final funkinJson:FunkinCharacter = cast json;
 
-        var result:ALECharacter = {
+            final result:ALECharacter = {
+                type: switch (funkinJson.renderType)
+                {
+                    case 'animateatlas', 'multianimateatlas':
+                        'map';
+
+                    default:
+                        'sheet';
+                },
+                animations: [],
+                scale: 1,
+                animationLength: 0.4,
+                icon: funkinJson.healthIcon.id,
+                position: funkinJson.offsets == null ? {x: 0, y: 0} : {
+                    x: funkinJson.offsets[0],
+                    y: funkinJson.offsets[1]
+                },
+                cameraPosition: funkinJson.cameraOffset == null ? {x: 0, y: 0} : {
+                    x: funkinJson.cameraOffsets[0],
+                    y: funkinJson.cameraOffsets[1]
+                },
+                textures: [funkinJson.assetPath.contains(':') ? funkinJson.assetPath.split(':')[1] : funkinJson.assetPath],
+                flipX: funkinJson.flipX,
+                flipY: false,
+                antialiasing: true,
+                barColor: [0, 255, 0],
+                death: 'bf-dead',
+                sustainAnimation: false,
+                danceModulo: char.contains('gf') && !char.contains('bf') ? 1 : 2,
+                format: CHARACTER_FORMAT
+            }
+
+            for (anim in funkinJson.animations)
+                result.animations.push({
+                    animation: anim.name,
+                    prefix: anim.prefix,
+                    framerate: 24,
+                    loop: false,
+                    indices: anim.indices,
+                    offset: {
+                        x: anim.offsets[0],
+                        y: anim.offsets[1]
+                    }
+                });
+
+            return result;
+        }
+
+        final psychJson:PsychCharacter = cast json;
+
+        final result:ALECharacter = {
+            type: 'sheet',
             animations: [],
             scale: psychJson.scale,
             animationLength: psychJson.sing_duration / 10,
@@ -189,7 +242,7 @@ class ALEFormatter
             antialiasing: !psychJson.no_antialiasing,
             barColor: StringTools.hex(CoolUtil.colorFromArray(psychJson.healthbar_colors)),
             death: psychJson.deadVariant ?? 'bf-dead',
-            sustainAnimation: false,
+            sustainAnimation: true,
             danceModulo: char.contains('gf') && !char.contains('bf') ? 1 : 2,
             format: CHARACTER_FORMAT
         };
@@ -211,8 +264,8 @@ class ALEFormatter
                 loop: anim.loop,
                 indices: anim.indices,
                 offset: {
-                    x: anim.offsets[0],
-                    y: anim.offsets[1]
+                    x: anim.offsets[0] / psychJson.scale,
+                    y: anim.offsets[1] / psychJson.scale
                 }
             });
 
