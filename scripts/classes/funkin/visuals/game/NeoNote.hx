@@ -33,7 +33,7 @@ class NeoNote extends scripting.haxe.ScriptSprite
 
     public var parent:NeoNote;
 
-    public var character:Character;
+    public var characterPosition:Character;
 
     public var singAnimation:String;
     public var missAnimation:String;
@@ -60,7 +60,7 @@ class NeoNote extends scripting.haxe.ScriptSprite
         return sustainSpeed;
     }
 
-    public function new(config:ALEStrum, time:Float, data:Int, length:Float, noteType:String, type:NoteType, space:Float, scale:Float, skins:Array<String>, palette:RGBPalette, character:Character, ?sustainHeight:Float, ?speed:Float)
+    public function new(config:ALEStrum, time:Float, data:Int, length:Float, noteType:String, type:NoteType, space:Float, scale:Float, skins:Array<String>, palette:RGBPalette, character:Int, ?sustainHeight:Float, ?speed:Float)
     {
         super();
 
@@ -73,7 +73,7 @@ class NeoNote extends scripting.haxe.ScriptSprite
         this.length = length;
         this.noteType = noteType;
 
-        this.character = character;
+        this.characterPosition = character;
 
         this.singAnimation = config.sing;
         this.missAnimation = config.miss;

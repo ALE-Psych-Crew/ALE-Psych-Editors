@@ -197,7 +197,7 @@ class ALEFormatter
                 flipX: funkinJson.flipX,
                 flipY: false,
                 antialiasing: true,
-                barColor: [0, 255, 0],
+                barColor: type == 'opponent' ? '0xFFFF0000' : '0xFF00FF00',
                 death: 'bf-dead',
                 sustainAnimation: false,
                 danceModulo: char.contains('gf') && !char.contains('bf') ? 1 : 2,
@@ -206,7 +206,7 @@ class ALEFormatter
 
             for (anim in funkinJson.animations)
                 result.animations.push({
-                    animation: anim.name,
+                    name: anim.name,
                     prefix: anim.prefix,
                     framerate: 24,
                     loop: false,
@@ -259,7 +259,7 @@ class ALEFormatter
         for (anim in psychJson.animations)
             result.animations.push({
                 prefix: anim.name,
-                animation: anim.anim,
+                name: anim.anim,
                 framerate: anim.fps,
                 loop: anim.loop,
                 indices: anim.indices,
@@ -355,19 +355,19 @@ class ALEFormatter
 
         return {
             texture: id,
-            animationType: "frames",
+            type: "frames",
             animations: [
                 {
                     percent: 0,
-                    animation: 'lose',
-                    frames: [1],
+                    name: 'lose',
+                    indices: [1],
                     framerate: 0,
                     loop: false
                 },
                 {
                     percent: 20,
-                    animation: 'neutral',
-                    frames: [0],
+                    name: 'neutral',
+                    indices: [0],
                     framerate: 0,
                     loop: false
                 }

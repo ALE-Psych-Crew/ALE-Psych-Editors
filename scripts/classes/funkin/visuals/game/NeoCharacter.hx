@@ -56,37 +56,13 @@ class NeoCharacter extends FunkinSprite
 
         offsets.clear();
 
-        switch (data.type)
-        {
-            case 'sheet':
-                frames = Paths.getMultiAtlas(data.textures);
-
-            case 'map':
-                frames = Paths.getAnimateAtlas(data.textures[0]);
-
-            default:
-        }
+        loadFrames(cast data.type, data.textures, data.animations.length);
 
         for (animData in data.animations)
         {
-            switch (data.type)
-            {
-                case 'sheet':
-                    if (animData.indices != null && animData.indices.length > 0)
-                        anim.addByIndices(animData.animation, animData.prefix, animData.indices, '', animData.framerate, animData.loop);
-                    else
-                        anim.addByPrefix(animData.animation, animData.prefix, animData.framerate, animData.loop);
+            addAnimation(cast data.type, animData.name, animData.prefix, animData.framerate, animData.loop, animData.indices);
 
-                case 'map':
-                    if (animData.indices != null && animData.indices.length > 0)
-                        anim.addByFrameLabelIndices(animData.animation, animData.prefix, animData.indices, animData.framerate, animData.loop);
-                    else
-                        anim.addByFrameLabel(animData.animation, animData.prefix, animData.framerate, animData.loop);
-
-                default:
-            }
-
-            offsets.set(animData.animation, animData.offset);
+            offsets.set(animData.name, animData.offset);
         }
 
         if (offsets.exists('danceLeft') && offsets.exists('danceRight'))

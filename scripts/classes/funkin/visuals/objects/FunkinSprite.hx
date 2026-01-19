@@ -4,7 +4,9 @@ import haxe.ds.StringMap;
 
 import flixel.math.FlxAngle;
 
+
 /*
+import core.enums.SpriteType;
 import core.structures.Point;
 */
 
@@ -67,5 +69,43 @@ class FunkinSprite extends scripting.haxe.ScriptAnimate
         }
         
         offset.set(sx, sy);
+    }
+
+    public function addAnimation(type:SpriteType, name:String, ?prefix:String, ?fps:Int, ?loop:Bool, ?indices:Null<Array<Int>>)
+    {
+        switch (type)
+        {
+            case 'sheet':
+                if (indices == null || indices.length <= 0)
+                    animation.addByPrefix(name, prefix, fps, loop);
+                else
+                    animation.addByIndices(name, prefix, indices, '', fps, loop);
+
+            case 'frames':
+                animation.add(name, indices, fps, loop);
+
+            case 'map':
+                if (indices == null || indices.length <= 0)
+                    animation.addByFrameLabel(name, prefix, fps, loop);
+                else
+                    animate.addByFrameLabelIndices(name, prefix, indices, fps, loop);
+
+            default:
+        }
+    }
+
+    public function loadFrames(type:SpriteType, ids:Array<String>, ?anims:Int)
+    {
+        switch (type)
+        {
+            case 'sheet':
+                frames = Paths.getMultiAtlas(ids);
+            case 'map':
+                frames = Paths.getAnimateAtlas(ids[0]);
+            case 'frames':
+                final graphic:FlxGraphic = Paths.image(ids[0]);
+
+                loadGraphic(graphic, true, Math.floor(graphic.width / anims));
+        }
     }
 }

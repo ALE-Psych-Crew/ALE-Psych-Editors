@@ -64,11 +64,15 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
     public final type:CharacterType;
 
+    public var characters:Array<Character>;
+
     public function new(chartData:ALESongStrumLine, arrayNotes:Array<Dynamic>, speed:Float, characters:Array<Character>, ?onStackNote:Note -> Dynamic, ?postStackNote:Note -> Void)
     {
         super();
 
         this.scrollSpeed = speed;
+
+        this.characters = characters;
 
         config = ALEFormatter.getStrumLine(chartData.file);
 
@@ -113,14 +117,14 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
         var tempNotes:Array<Note> = [];
 
-        for (note in arrayNotes)
+        for (chartNote in arrayNotes)
         {
-            final time:Float = note[0];
-            final data:Int = note[1];
-            final length:Float = note[2];
-            final character:Character = characters[note[4]];
-            final type:String = note[3];
-            final crochet:Float = note[5];
+            final time:Float = chartNote[0];
+            final data:Int = chartNote[1];
+            final length:Float = chartNote[2];
+            final type:String = chartNote[3];
+            final character:Int = chartNote[4];
+            final crochet:Float = chartNote[5];
 
             final space:Float = config.space;
             final scale:Float = config.noteScale;
@@ -339,32 +343,36 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
             note.followStrum(strums.members[note.data], Conductor.stepCrochet, scrollSpeed);
     }
 
-    public var onHitNote:Note -> Rating -> Bool -> Dynamic;
-    public var postHitNote:Note -> Bool -> Void;
+    public var onHitNote:Note -> Rating -> Character -> Bool -> Dynamic;
+    public var postHitNote:Note -> Rating -> Character -> Bool -> Void;
 
     public function hitNote(note:Note, ?remove:Bool)
     {
+        remove ??= true;
+
         final rating:Rating = judgeNote(note.timeDistance);
 
-        final callbackResult:Dynamic = onHitNote == null ? null : onHitNote(note, rating, remove);
+        final character:Character = this.characters[note.characterPosition];
+
+        final callbackResult:Dynamic = onHitNote == null ? null : onHitNote(note, rating, character, remove);
 
         if (callbackResult != CoolVars.Function_Stop)
         {
             note.hit = true;
 
-            note.character.sing(note.type != 'note' && !note.character.data.sustainAnimation ? null : note.singAnimation);
+            character?.sing(note.type != 'note' && !character.data.sustainAnimation ? null : note.singAnimation);
 
             if (note.type == 'note' && rating == 'sick' && !botplay)
                 splashes.members[note.data].splash();
 
             strums.members[note.data].playAnim('hit');
 
-            if (remove ?? true)
+            if (remove)
                 removeNote(note);
         }
 
         if (postHitNote != null)
-            postHitNote(note, remove ?? true);
+            postHitNote(note, rating, character, remove);
     }
 
     public var sickWindow:Int = 45;
@@ -388,30 +396,34 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         return 'shit';
     }
 
-    public var onMissNote:Note -> Dynamic;
-    public var postMissNote:Note -> Void;
+    public var onMissNote:Note -> Character -> Dynamic;
+    public var postMissNote:Note -> Character -> Void;
 
     public function missNote(note:Note)
     {
-        final callbackResult:Dynamic = onMissNote == null ? null : onMissNote(note);
+        final character:Character = this.characters[note.characterPosition];
+
+        final callbackResult:Dynamic = onMissNote == null ? null : onMissNote(note, character);
 
         if (callbackResult != CoolVars.Function_Stop)
         {
             note.miss = true;
 
-            note.character.sing(note.type != 'note' && !note.character.data.sustainAnimation ? null : note.missAnimation);
+            character?.sing(note.type != 'note' && !character.data.sustainAnimation ? null : note.missAnimation);
         }
 
         if (postMissNote != null)
-            postMissNote(note);
+            postMissNote(note, character);
     }
 
-    public var onRemoveNote:Note -> Dynamic;
-    public var postRemoveNote:Note -> Void;
+    public var onRemoveNote:Note -> Character -> Dynamic;
+    public var postRemoveNote:Note -> Character -> Void;
 
     public function removeNote(note:Note)
     {
-        final callbackResult:Dynamic = onRemoveNote == null ? null : onRemoveNote(note);
+        final character:Character = this.characters[note.characterPosition];
+
+        final callbackResult:Dynamic = onRemoveNote == null ? null : onRemoveNote(note, character);
 
         if (callbackResult != CoolVars.Function_Stop)
         {
@@ -421,7 +433,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         }
 
         if (postRemoveNote != null)
-            postRemoveNote(note);
+            postRemoveNote(note, character);
     }
 
     override function destroy()

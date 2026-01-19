@@ -175,7 +175,9 @@ function set_botplay(value:Bool):Bool
 function set_health(value:Float):Float
 {
     health = FlxMath.bound(value, 0, 2);
+
     updateHealth();
+
     return health;
 }
 
@@ -207,7 +209,7 @@ var camGame:FXCamera;
 function onCreate()
 {
     ClientPrefs.data.downScroll = false;
-    ClientPrefs.data.botplay = true;
+    ClientPrefs.data.botplay = false;
 
     initCamera();
     initSong();
@@ -216,14 +218,32 @@ function onCreate()
     initHud();
     initMusic();
 
-    dad.change('sserafim-yunjin');
-    dad.x -= 300;
-    debugTrace(dad.anim.getNameList());
-    
-    boyfriend.change('sserafim-sakura');
-    boyfriend.y -= 300;
+    changeCharacter(boyfriend, 'sserafim-sakura');
 
-    gf.change('sserafim-gf');
+    changeCharacter(dad, 'sserafim-yunjin');
+    
+    changeCharacter(gf, 'mom');
+}
+
+function changeCharacter(char:Character, newChar:String)
+{
+    char.change(newChar);
+
+    if (char == boyfriend)
+    {
+        playerIcon.change(char.data.icon);
+
+        healthBar.leftBar.color = CoolUtil.colorFromString(char.data.barColor);
+    }
+
+    if (char == dad)
+    {
+        opponentIcon.change(char.data.icon);
+
+        healthBar.rightBar.color = CoolUtil.colorFromString(char.data.barColor);
+    }
+
+    resetCharacterPosition(char);
 }
 
 function initMusic()
@@ -427,41 +447,24 @@ function initStrumLines()
     {
         final strlCharacters:Array<Character> = [];
 
-        for (character in strl.characters)
+        for (char in strl.characters)
         {
-            final character:Character = new Character(character, strl.type);
-
-            character.x = character.data.position.x;
-            character.y = character.data.position.y;
-
-            if (STAGE.characterOffset != null)
-            {
-                var offset:Point = null;
-
-                if (STAGE.characterOffset.type != null)
-                    offset = Reflect.getProperty(STAGE.characterOffset.type, cast character.type);
-
-                if (STAGE.characterOffset.id != null)
-                    offset = Reflect.getProperty(STAGE.characterOffset.id, character.id);
-
-                if (offset != null)
-                {
-                    character.x += offset.x ?? 0;
-                    character.y += offset.y ?? 0;
-                }
-            }
+            final character:Character = new Character(char, strl.type);
 
             cameraCharacters[strlIndex] ??= [];
+
             cameraCharacters[strlIndex].push(character);
+
             strlCharacters.push(character);
+            
             addCharacter(character);
         }
 
         final strumLine:StrumLine = new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters);
 
-        strumLine.onHitNote = (note, rating, removeNote) ->
+        strumLine.onHitNote = (note, rating, character, removeNote) ->
         {
-            if (note.character.type == 'player')
+            if (character.type == 'player')
             {
                 health = health + note.hitHealth;
 
@@ -477,9 +480,9 @@ function initStrumLines()
             return null;
         };
 
-        strumLine.onMissNote = (note) ->
+        strumLine.onMissNote = (note, character) ->
         {
-            if (note.character.type == 'player')
+            if (character.type == 'player')
             {
                 if (note.type == 'note')
                 {
@@ -501,10 +504,17 @@ function ratingToAccuracy(rating:Rating):Float
 {
     return switch (cast rating)
     {
-        case 'sick': 100;
-        case 'good': 67;
-        case 'bad': 33;
-        default: 0;
+        case 'sick':
+            100;
+            
+        case 'good':
+            67;
+
+        case 'bad':
+            33;
+
+        default:
+            0;
     };
 }
 
@@ -512,11 +522,20 @@ function ratingToScore(rating:Rating):Float
 {
     return switch (cast rating)
     {
-        case 'sick': 350;
-        case 'good': 200;
-        case 'bad': 100;
-        case 'shit': 50;
-        default: 0;
+        case 'sick':
+            350;
+
+        case 'good':
+            200;
+
+        case 'bad':
+            100;
+
+        case 'shit':
+            50;
+
+        default:
+            0;
     };
 }
 
@@ -524,14 +543,46 @@ function addCharacter(character:Character)
 {
     switch (character.type)
     {
-        case 'opponent': opponents.add(character);
-        case 'player': players.add(character);
-        case 'extra': extras.add(character);
+        case 'opponent':
+            opponents.add(character);
+
+        case 'player':
+            players.add(character);
+
+        case 'extra':
+            extras.add(character);
+
         default:
     }
+    
+    resetCharacterPosition(character);
 
     characters.add(character);
+
     add(character);
+}
+
+function resetCharacterPosition(character:Character)
+{
+    character.x = character.data.position.x;
+    character.y = character.data.position.y;
+
+    if (STAGE.characterOffset != null)
+    {
+        var offset:Point = null;
+
+        if (STAGE.characterOffset.type != null)
+            offset = Reflect.getProperty(STAGE.characterOffset.type, cast character.type);
+
+        if (STAGE.characterOffset.id != null)
+            offset = Reflect.getProperty(STAGE.characterOffset.id, character.id);
+
+        if (offset != null)
+        {
+            character.x += offset.x ?? 0;
+            character.y += offset.y ?? 0;
+        }
+    }
 }
 
 inline function addBehindOpponents(obj:FlxBasic)

@@ -10,7 +10,7 @@ import core.structures.ALEIcon;
 import core.enums.CharacterType;
 */
 
-class Icon extends scripting.haxe.ScriptSprite
+class Icon extends funkin.visuals.objects.FunkinSprite
 {
     public var bar:NeoBar;
 
@@ -44,24 +44,10 @@ class Icon extends scripting.haxe.ScriptSprite
 
         data.animations.sort((a, b) -> a.percent - b.percent);
 
-        switch (cast data.animationType)
-        {
-            case 'sheet':
-                frames = Paths.getAtlas('icons/' + data.texture);
+        loadFrames(cast data.type, ['icons/' + data.texture], data.animations.length);
 
-                for (anim in data.animations)
-                    if (anim.indices == null)
-                        animation.addByPrefix(anim.animation, anim.prefix, anim.framerate, anim.loop);
-                    else
-                        animation.addByIndices(anim.animation, anim.prefix, anim.indices, anim.framerate, anim.loop);
-            case 'frames':
-                final graphic:FlxGraphic = Paths.image('icons/' + data.texture, false, false) ?? Paths.image('icons/face');
-
-                loadGraphic(graphic, true, Math.floor(graphic.width / data.animations.length));
-
-                for (anim in data.animations)
-                    animation.add(anim.animation, anim.frames, anim.framerate, anim.loop, anim.flipX);
-        }
+        for (animData in data.animations)
+            addAnimation(cast data.type, animData.name, animData.prefix, animData.framerate, animData.loop, animData.indices);
 
         offsetX = data.offset.x;
         offsetY = data.offset.y;
@@ -126,13 +112,9 @@ class Icon extends scripting.haxe.ScriptSprite
         while (animationIndex >= 0 && percent < data.animations[animationIndex].percent)
             animationIndex--;
 
-        final curAnimation = data.animations[animationIndex].animation;
+        final curAnimation = data.animations[animationIndex].name;
 
         if (animation.name != curAnimation)
-        {
-            animation.play(curAnimation);
-
-            centerOffsets();
-        }
+            playAnim(curAnimation);
     }
 }
