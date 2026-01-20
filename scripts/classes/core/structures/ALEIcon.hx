@@ -14,4 +14,5 @@ typedef ALEIcon = {
     var flipX:Bool;
     var flipY:Bool;
     var offset:Point;
+    var antialiasing:Bool;
 }

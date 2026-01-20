@@ -283,8 +283,11 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
             if (botplay)
             {
-                if (!note.hit && note.timeDistance <= 0)
+                if (!note.hit && note.timeDistance <= 0 && !note.ignore)
                     hitNote(note, note.type == 'note');
+
+                if (note.botplayMiss && note.timeDistance < -shitWindow && !note.miss && !note.hit && note.ignore)
+                    missNote(note);
             } else {
                 if (note.type == 'note')
                 {
@@ -297,7 +300,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
                         hitNote(note, false);
                 }
 
-                if (note.timeDistance < -shitWindow && !note.miss && !note.hit)
+                if (note.timeDistance < -shitWindow && !note.miss && !note.hit && !note.ignore)
                     missNote(note);
             }
 

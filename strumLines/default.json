@@ -112,5 +112,6 @@
     "strumTextures": [
         "default"
     ],
+    "antialiasing": true,
     "format": "ale-strumline-v0.1"
 }

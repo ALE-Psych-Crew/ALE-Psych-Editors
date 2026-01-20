@@ -54,7 +54,7 @@ class NeoCharacter extends FunkinSprite
 
         flipY = data.flipY;
 
-        antialiasing = data.antialiasing;
+        antialiasing = data.antialiasing && ClientPrefs.data.antialiasing;
 
         offsets.clear();
 

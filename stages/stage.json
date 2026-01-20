@@ -1,7 +1,7 @@
 {
 	"zoom": 0.9,
 	"speed": 1,
-	"hud": "default",
+	"hud": "pixel",
 	"characterOffset": {
 		"type": {
 			"opponent": {

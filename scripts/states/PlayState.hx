@@ -206,9 +206,9 @@ var camGame:FXCamera;
 
 function onCreate()
 {
-    ClientPrefs.data.downScroll = false;
-    
-    ClientPrefs.data.botplay = false;
+    ClientPrefs.data.downScroll = true;
+
+    ClientPrefs.data.botplay = true;
 
     initCamera();
     initSong();
@@ -220,6 +220,8 @@ function onCreate()
     cacheSounds();
 
     startCountdown();
+
+    botplay = ClientPrefs.data.botplay;
 }
 
 final soundsMap:StringMap<Sound> = new StringMap();
@@ -272,7 +274,7 @@ var countdownSprite:FlxSprite;
 
 var allowSongPositionUpdate:Bool = false;
 
-var skipCountdown:Bool = true;
+var skipCountdown:Bool = false;
 
 function startCountdown()
 {

@@ -38,6 +38,10 @@ class NeoNote extends scripting.haxe.ScriptSprite
     public var singAnimation:String;
     public var missAnimation:String;
 
+    public var botplayMiss:Bool = false;
+
+    public var ignore:Bool = false;
+
     public var sustainHeight(default, set):Float;
     function set_sustainHeight(value:Float):Float
     {

@@ -379,6 +379,7 @@ class ALEFormatter
             lerp: 0.33,
             flipX: false,
             flipY: false,
+            antialiasing: !id.contains('pixel'),
             format: ICON_FORMAT
         };
     }
