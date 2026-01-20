@@ -32,6 +32,8 @@ class NeoCharacter extends FunkinSprite
 
     public var id:String;
 
+    public var vocals:Array<FlxSound> = [];
+
     public function change(id:String, ?type:CharacterType)
     {
         if (type != null)
@@ -83,7 +85,7 @@ class NeoCharacter extends FunkinSprite
             danceTimer -= elapsed;
     }
 
-    public function sing(?anim:String, ?applyTimer:Bool, ?force:Bool)
+    public function playTimerAnim(?anim:String, ?applyTimer:Bool, ?force:Bool)
     {
         if (anim != null)
             playAnim(anim, force);
@@ -92,11 +94,29 @@ class NeoCharacter extends FunkinSprite
             danceTimer = data.animationLength;
     }
 
-    public function dance()
+    public function sing(?anim:String, ?applyTimer:Bool, ?force:Bool)
     {
-        if (Conductor.curBeat % data.danceModulo == 0 && danceTimer <= 0)
+        playTimerAnim(anim, applyTimer, force);
+
+        for (vocal in vocals)
+            if (vocal != null)
+                vocal.volume = 1;
+    }
+
+    public function miss(?anim:String, ?applyTimer:Bool, ?force:Bool)
+    {
+        playTimerAnim(anim, applyTimer, force);
+
+        for (vocal in vocals)
+            if (vocal != null)
+                vocal.volume = 0;
+    }
+
+    public function dance(curBeat:Int)
+    {
+        if (curBeat % data.danceModulo == 0 && danceTimer <= 0)
             if (offsets.exists('danceLeft') && offsets.exists('danceRight'))
-                playAnim(Conductor.curBeat % (data.danceModulo * 2) == 0 ? 'danceLeft' : 'danceRight');
+                playAnim(curBeat % (data.danceModulo * 2) == 0 ? 'danceLeft' : 'danceRight');
             else
                 playAnim('idle');
     }

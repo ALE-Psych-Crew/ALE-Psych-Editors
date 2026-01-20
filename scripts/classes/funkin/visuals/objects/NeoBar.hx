@@ -46,11 +46,11 @@ class NeoBar extends scripting.haxe.ScriptSpriteGroup
         return rightToLeft;
     }
 
-    public function new(?x:Float, ?y:Float, ?percent:Float, ?rightToLeft:Bool, ?image:String, ?leftColor:FlxColor, ?rightColor:FlxColor)
+    public function new(image:String, ?x:Float, ?y:Float, ?percent:Float, ?rightToLeft:Bool, ?leftColor:FlxColor, ?rightColor:FlxColor)
     {
         super(x, y);
 
-        bg = new FlxSprite().loadGraphic(Paths.image(image ?? 'ui/bar'));
+        bg = new FlxSprite().loadGraphic(Paths.image(image));
 
         leftBar = new FlxSprite().makeGraphic(Std.int(bg.width), Std.int(bg.height));
         leftBar.color = leftColor ?? FlxColor.LIME;

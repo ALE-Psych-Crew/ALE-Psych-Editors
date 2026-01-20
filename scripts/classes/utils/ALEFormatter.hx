@@ -296,7 +296,7 @@ class ALEFormatter
         return {
             speed: json.camera_speed,
             zoom: json.defaultZoom,
-            ui: json.isPixelStage ? 'pixel' : 'default',
+            hud: json.isPixelStage ? 'pixel' : 'default',
             characterOffset: {
                 type: {
                     player: {

@@ -54,10 +54,8 @@ if (true)
 
 // ------- ADRIANA SALTE -------
 
-var SONG:ALESong;
+var CHART:ALESong;
 var STAGE:ALEStage;
-
-var instSound:openfl.media.Sound;
 
 var characters:FlxTypedGroup<Character>;
 var opponents:FlxTypedGroup<Character>;
@@ -117,6 +115,8 @@ function get_scoreTxt():FlxText
 var accuracy(get, never):Float;
 function get_accuracy():Float
     return totalPlayed == 0 ? 0 : accuracyMod / totalPlayed;
+
+var uiGroup:FlxTypedGroup<FlxBasic>;
 
 public function calculateBPMChanges(?song:Null<ALESong>)
 {
@@ -181,27 +181,19 @@ function set_health(value:Float):Float
     return health;
 }
 
-function new(?song:String, ?difficulty:String)
+final song:String;
+
+final difficulty:String;
+
+function new(?songName:String, ?diff:String)
 {
-    song ??= 'bopeebo';
-    difficulty ??= 'hard';
+    song = songName ?? 'bopeebo';
+    difficulty = diff ?? 'normal';
 
-    SONG ??= ALEFormatter.getSong(song, difficulty);
-    STAGE ??= ALEFormatter.getStage(SONG.stage);
+    CHART ??= ALEFormatter.getSong(song, difficulty);
+    STAGE ??= ALEFormatter.getStage(CHART.stage);
 
-    calculateBPMChanges(SONG);
-
-    instSound = Paths.inst('songs/' + (song));
-    
-    for (path in [''])
-    {
-        var sound:FlxSound = new FlxSound().loadEmbedded(Paths.voices('songs/' + song, path));
-        add(sound);
-
-        FlxG.sound.list.add(sound);
-
-        vocals.push(sound);
-    }
+    calculateBPMChanges(CHART);
 }
 
 var camGame:FXCamera;
@@ -209,6 +201,7 @@ var camGame:FXCamera;
 function onCreate()
 {
     ClientPrefs.data.downScroll = false;
+    
     ClientPrefs.data.botplay = false;
 
     initCamera();
@@ -216,13 +209,130 @@ function onCreate()
     initStage();
     initControls();
     initHud();
-    initMusic();
 
-    changeCharacter(boyfriend, 'sserafim-sakura');
+    cacheSounds();
 
-    changeCharacter(dad, 'sserafim-yunjin');
+    startCountdown();
+}
+
+final soundsMap:StringMap<Sound> = new StringMap();
+
+function cacheSounds()
+{
+    soundsMap.set('::MUSIC', Paths.inst('songs/' + song));
+
+    final voices:Sound = Paths.voices('songs/' + song);
+
+    if (voices != null)
+        soundsMap.set('::VOICES', voices);
+
+    final playerVoices:Sound = Paths.voices('songs/' + song, 'Player', false, false);
+
+    if (playerVoices != null)
+        soundsMap.set('::PLAYER', playerVoices);
+
+    final opponentVoices:Sound = Paths.voices('songs/' + song, 'Opponent', false, false);
+
+    if (opponentVoices != null)
+        soundsMap.set('::OPPONENT', opponentVoices);
+
+    final extraVoices:Sound = Paths.voices('songs/' + song, 'Extra', false, false);
+
+    if (extraVoices != null)
+        soundsMap.set('::EXTRA', extraVoices);
+
+    characters.forEachAlive((char) -> {
+        final voice:Sound = Paths.voices('songs/' + song, char.id, false, false);
+
+        if (voice != null)
+            soundsMap.set(char.id, voice);
+    }); 
+}
+
+function addVocal(vocal:Sound)
+{
+    if (vocal == null)
+        return;
+
+    vocals.push(vocal);
+
+    FlxG.sound.list.add(vocal);
+}
+
+var camOther:FXCamera;
+
+var countdownSprite:FlxSprite;
+
+var allowSongPositionUpdate:Bool = false;
+
+function startCountdown()
+{
+    final scriptResult:Array<Dynamic> = [];
+
+    countdownSprite = new FlxSprite();
+    countdownSprite.alpha = 0;
+    countdownSprite.cameras = [camOther];
+
+    add(countdownSprite);
     
-    changeCharacter(gf, 'mom');
+    final ids:Array<String> = [null, 'ready', 'set', 'go'];
+
+    final graphics:Array<FlxGraphic> = [for (spr in ids) spr == null ? null : Paths.image('hud/' + STAGE.hud + '/countdown/' + spr)];
+
+    final sounds:Array<Sound> = [for (spr in ['three', 'two', 'one', 'go']) spr == null ? null : Paths.sound('hud/' + STAGE.hud + '/countdown/' + spr)];
+
+    if (!scriptResult.contains(CoolVars.Function_Stop))
+    {
+        allowSongPositionUpdate = true;
+        
+        Conductor.songPosition = -Conductor.crochet * 5;
+
+        FlxTimer.loop(Conductor.crochet / 1000, (loop) -> {
+            if (loop == 5)
+            {
+                allowSongPositionUpdate = false;
+
+                startSong();
+
+                return;
+            }
+
+            final scriptResult:Array<Dynamic> = [];
+
+            if (!scriptResult.contains(CoolVars.Function_Stop))
+            {
+                final graphic:FlxGraphic = graphics[loop - 1];
+
+                FlxG.sound.play(sounds[loop - 1]);
+
+                if (graphic != null)
+                {
+                    countdownSprite.loadGraphic(graphic);
+
+                    FlxTween.cancelTweensOf(countdownSprite);
+                    FlxTween.cancelTweensOf(countdownSprite.scale);
+
+                    countdownSprite.scale.x = countdownSprite.scale.y = 1;
+                    countdownSprite.alpha = 1;
+
+                    countdownSprite.updateHitbox();
+                    countdownSprite.screenCenter();
+
+                    FlxTween.tween(countdownSprite.scale, {x: 0.9, y: 0.9}, Conductor.crochet / 1250, {ease: FlxEase.backOut});
+
+                    FlxTween.tween(countdownSprite, {alpha: 0}, Conductor.crochet / 1250, {ease: FlxEase.cubeIn});
+
+                    characters.forEachAlive((char) -> {
+                        char.dance(loop - 1);
+                    });
+                }
+            }
+
+            // POST
+        }, 5);
+    }
+
+    // POST
 }
 
 function changeCharacter(char:Character, newChar:String)
@@ -246,33 +356,95 @@ function changeCharacter(char:Character, newChar:String)
     resetCharacterPosition(char);
 }
 
-function initMusic()
+function startSong()
 {
-    for (sound in vocals)
-        sound.play(sound);
+    FlxG.sound.playMusic(soundsMap.get('::MUSIC'), 0.85, false);
 
-    FlxG.sound.playMusic(instSound, 0.75, false);
+    final voices:Null<FlxSound> = null;
+
+    if (soundsMap.exists('::VOICES'))
+        voices = new FlxSound().loadEmbedded(soundsMap.get('::VOICES'));
+
+    final playerVoices:Null<FlxSound> = null;
+
+    if (soundsMap.exists('::PLAYER'))
+        playerVoices = new FlxSound().loadEmbedded(soundsMap.get('::PLAYER'));
+
+    final opponentVoices:Null<FlxSound> = null;
+
+    if (soundsMap.exists('::OPPONENT'))
+        opponentVoices = new FlxSound().loadEmbedded(soundsMap.get('::OPPONENT'));
+
+    final extraVoices:Null<FlxSound> = null;
+
+    if (soundsMap.exists('::EXTRA'))
+        extraVoices = new FlxSound().loadEmbedded(soundsMap.get('::EXTRA'));
+
+    for (sound in [voices, playerVoices, opponentVoices, extraVoices])
+        if (sound != null)
+            addVocal(sound);
+
+    final existingCharactersVocals:StringMap<FlxSound> = new StringMap();
+
+    characters.forEachAlive((char) ->
+    {
+        if (voices != null)
+            char.vocals.push(voices);
+
+        final defaultVoice:Null<FlxSound> = switch (cast char.type)
+        {
+            case 'player':
+                playerVoices;
+
+            case 'opponent':
+                opponentVoices;
+
+            case 'extra':
+                extraVoices;
+
+            default:
+                null;
+        };
+
+        if (defaultVoice != null)
+            char.vocals.push(defaultVoice);
+
+        final voice:Null<FlxSound> = null;
+
+        if (existingCharactersVocals.exists(char.id))
+        {
+            voice = existingCharactersVocals.get(char.id);
+        } else if (soundsMap.exists(char.id)) {
+            voice = new FlxSound().loadEmbedded(soundsMap.get(char.id));
+
+            addVocal(voice);
+
+            existingCharactersVocals.set(char.id);
+        }
+
+        if (voice != null)
+            char.vocals.push(voice);
+    });
 }
 
 function onUpdate(elapsed:Float)
 {
-    if (FlxG.sound.music.playing)
+    if ((FlxG.sound.music != null && FlxG.sound.music.playing) || allowSongPositionUpdate)
         Conductor.songPosition += elapsed * 1000;
 
-    scoreText.text = ClientPrefs.data.botplay
-        ? 'BOTPLAY'
-        : 'Score: ' + score + '    Misses: ' + misses + '    Accuracy: ' + CoolUtil.floorDecimal(accuracy, 2) + '%';
+    scoreText.text = botplay ? 'BOTPLAY' : 'Score: ' + score + '    Misses: ' + misses + '    Accuracy: ' + CoolUtil.floorDecimal(accuracy, 2) + '%';
 
     if (Controls.RESET)
     {
-        FlxG.sound.music?.pause();
+        stopMusic();
+        
         FlxG.resetState();
     }
 }
 
 function onSectionHit()
 {
-    final songSection:ALESongSection = SONG.sections[curSection];
+    final songSection:ALESongSection = CHART.sections[curSection];
 
     if (songSection == null)
         return;
@@ -324,7 +496,7 @@ function onStepHit()
 
 function onBeatHit(curBeat:Int)
 {
-    characters.forEachAlive(char -> char.dance());
+    characters.forEachAlive(char -> char.dance(curBeat));
 
     icons.forEachAlive(icon -> icon.bop(curBeat));
 
@@ -336,25 +508,41 @@ function onDestroy()
 {
     FlxG.stage.removeEventListener('keyDown', justPressedKey);
     FlxG.stage.removeEventListener('keyUp', justReleasedKey);
+    
+    stopMusic();
+}
 
-    FlxG.sound.music?.pause();
+function stopMusic()
+{
+    FlxG.sound.music?.stop();
+
+    for (sound in vocals)
+    {
+        if (sound == null)
+            continue;
+
+        sound.stop();
+
+        FlxG.sound.list.remove(sound, true);
+    }
 }
 
 function initHud()
 {
-    healthBar = new Bar(0, FlxG.height * (ClientPrefs.data.downScroll ? 0.1 : 0.9), 50, true);
+    add(uiGroup = new FlxTypedGroup<FlxBasic>());
+
+    uiGroup.cameras = [camHUD];
+
+    healthBar = new Bar('hud/' + STAGE.hud + '/bar', 0, FlxG.height * (ClientPrefs.data.downScroll ? 0.1 : 0.9), 50, true);
     healthBar.x = FlxG.width / 2 - healthBar.width / 2;
-    healthBar.cameras = [camHUD];
-    add(healthBar);
+    uiGroup.add(healthBar);
 
     icons = new FlxTypedGroup<Icon>();
 
     playerIcon = new Icon('player');
-    playerIcon.cameras = [camHUD];
     addIcon(playerIcon);
 
     opponentIcon = new Icon('opponent');
-    opponentIcon.cameras = [camHUD];
     addIcon(opponentIcon);
 
     if (dad != null)
@@ -378,8 +566,8 @@ function initHud()
     scoreText = new FlxText(0, healthBar.y + 40, FlxG.width, 'Score      Misses      Rating');
     scoreText.setFormat(Paths.font('vcr.ttf'), 17, FlxColor.WHITE, 'center', FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
     scoreText.borderSize = 1.25;
-    scoreText.cameras = [camHUD];
-    add(scoreText);
+
+    uiGroup.add(scoreText);
 }
 
 function addIcon(icon:Icon)
@@ -388,7 +576,7 @@ function addIcon(icon:Icon)
 
     icons.add(icon);
 
-    add(icon);
+    uiGroup.add(icon);
 }
 
 function updateHealth()
@@ -397,7 +585,7 @@ function updateHealth()
 
     if (health <= 0)
     {
-        FlxG.sound.music.pause();
+        stopMusic();
 
         CoolUtil.openSubState(new CustomSubState(CoolVars.data.gameOverScreen));
     }
@@ -407,11 +595,11 @@ function initStrumLines()
 {
     final notes:Array<Array<Dynamic>> = [];
 
-    Conductor.bpm = SONG.bpm;
+    Conductor.bpm = CHART.bpm;
 
     if (true)
     {
-        for (section in SONG.sections)
+        for (section in CHART.sections)
         {
             if (section.changeBPM)
                 Conductor.bpm = section.bpm;
@@ -430,10 +618,10 @@ function initStrumLines()
             }
         }
 
-        Conductor.bpm = SONG.bpm;
+        Conductor.bpm = CHART.bpm;
     }
 
-    Conductor.bpm = SONG.bpm;
+    Conductor.bpm = CHART.bpm;
 
     characters = new FlxTypedGroup<Character>();
     opponents = new FlxTypedGroup<Character>();
@@ -441,9 +629,10 @@ function initStrumLines()
     extras = new FlxTypedGroup<Character>();
 
     add(strumLines = new FlxTypedGroup<StrumLine>());
+
     strumLines.cameras = [camHUD];
 
-    for (strlIndex => strl in SONG.strumLines)
+    for (strlIndex => strl in CHART.strumLines)
     {
         final strlCharacters:Array<Character> = [];
 
@@ -460,7 +649,7 @@ function initStrumLines()
             addCharacter(character);
         }
 
-        final strumLine:StrumLine = new StrumLine(strl, notes[strlIndex] ?? [], SONG.speed, strlCharacters);
+        final strumLine:StrumLine = new StrumLine(strl, notes[strlIndex] ?? [], CHART.speed, strlCharacters);
 
         strumLine.onHitNote = (note, rating, character, removeNote) ->
         {
@@ -667,7 +856,7 @@ function initSong()
 {
     initStrumLines();
 
-    Conductor.bpm = SONG.bpm;
+    Conductor.bpm = CHART.bpm;
 }
 
 function initCamera()
@@ -685,6 +874,10 @@ function initCamera()
     camHUD.bopZoom = 2;
     
     FlxG.cameras.add(camHUD, false);
+        
+    camOther = new FXCamera();
+
+    FlxG.cameras.add(camOther, false);
 }
 
 function resyncVocals()

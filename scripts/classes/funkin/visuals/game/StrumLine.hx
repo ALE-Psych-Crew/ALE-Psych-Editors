@@ -409,7 +409,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
         {
             note.miss = true;
 
-            character?.sing(note.type != 'note' && !character.data.sustainAnimation ? null : note.missAnimation);
+            character?.miss(note.type != 'note' && !character.data.sustainAnimation ? null : note.missAnimation);
         }
 
         if (postMissNote != null)
