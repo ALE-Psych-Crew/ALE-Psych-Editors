@@ -199,8 +199,8 @@ final difficulty:String;
 
 function new(?songName:String, ?diff:String)
 {
-    song = songName ?? 'bopibu';
-    difficulty = diff ?? 'erect';
+    song = songName ?? 'bopeebo';
+    difficulty = diff ?? 'hard';
 
     CHART ??= ALEFormatter.getSong(song, difficulty);
     STAGE ??= ALEFormatter.getStage(CHART.stage);
