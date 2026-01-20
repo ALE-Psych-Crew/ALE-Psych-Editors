@@ -1,16 +1,7 @@
 package utils;
 
 /*
-import core.structures.ALESong;
-import core.structures.PsychSong;
-import core.structures.ALESongSection;
-import core.structures.PsychSongSection;
-import core.structures.ALEStrumLine;
-import core.structures.ALECharacter;
-import core.structures.PsychCharacter;
-import core.structures.ALEStage;
-import core.structures.PsychStage;
-import core.structures.ALEIcon;
+import core.structures.*;
 
 import core.enums.CharacterType;
 */
@@ -348,7 +339,7 @@ class ALEFormatter
 
     public static function getIcon(id:String):ALEIcon
     {
-        final json:Dynamic = Paths.json('images/icons/' + id, false, false);
+        final json:Dynamic = Paths.json('icons/' + id, false, false);
 
         if (json != null && json.format == ICON_FORMAT)
             return cast json;
@@ -390,5 +381,17 @@ class ALEFormatter
             flipY: false,
             format: ICON_FORMAT
         };
+    }
+
+    public static final HUD_FORMAT:String = 'ale-hud-v0.1';
+
+    public static function getHud(id:String):ALEHud
+    {
+        final json:Dynamic = Paths.json('huds/' + id);
+
+        if (json.format == HUD_FORMAT)
+            return cast json;
+
+        return null;
     }
 }

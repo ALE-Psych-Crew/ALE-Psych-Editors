@@ -1,0 +1,25 @@
+{
+    "combo": {
+        "scale": 1,
+        "space": 100,
+        "position": {
+            "x": 400,
+            "y": 300
+        },
+        "numbersPosition": {
+            "x": 200,
+            "y": 100
+        }
+    },
+    "countdown": {
+        "scale": 6,
+        "endScale": 5.4,
+        "scaleEase": "linear",
+        "alpha": 1,
+        "endAlpha": 0.5,
+        "alphaEase": "linear",
+        "beats": 1,
+        "antialiasing": false
+    },
+    "format": "ale-hud-v0.1"
+}

@@ -21,7 +21,9 @@ import funkin.visuals.objects.Icon;
 import funkin.visuals.FXCamera;
 
 //import core.structures.ALESong;
+//import core.structures.ALEStage;
 //import core.structures.ALESongSection;
+//import core.structures.ALEHud;
 
 //import core.structures.Point;
 
@@ -56,6 +58,7 @@ if (true)
 
 var CHART:ALESong;
 var STAGE:ALEStage;
+var HUD:ALEHud;
 
 var characters:FlxTypedGroup<Character>;
 var opponents:FlxTypedGroup<Character>;
@@ -117,6 +120,8 @@ function get_accuracy():Float
     return totalPlayed == 0 ? 0 : accuracyMod / totalPlayed;
 
 var uiGroup:FlxTypedGroup<FlxBasic>;
+
+var combo:Int = 0;
 
 public function calculateBPMChanges(?song:Null<ALESong>)
 {
@@ -192,6 +197,7 @@ function new(?songName:String, ?diff:String)
 
     CHART ??= ALEFormatter.getSong(song, difficulty);
     STAGE ??= ALEFormatter.getStage(CHART.stage);
+    HUD ??= ALEFormatter.getHud(STAGE.hud);
 
     calculateBPMChanges(CHART);
 }
@@ -210,6 +216,7 @@ function onCreate()
     initControls();
     initHud();
 
+    cacheCombo();
     cacheSounds();
 
     startCountdown();
@@ -265,13 +272,23 @@ var countdownSprite:FlxSprite;
 
 var allowSongPositionUpdate:Bool = false;
 
+var skipCountdown:Bool = true;
+
 function startCountdown()
 {
+    if (skipCountdown)
+    {
+        startSong();
+        
+        return;
+    }
+
     final scriptResult:Array<Dynamic> = [];
 
     countdownSprite = new FlxSprite();
     countdownSprite.alpha = 0;
     countdownSprite.cameras = [camOther];
+    countdownSprite.antialiasing = HUD.antialiasing && ClientPrefs.data.antialiasing;
 
     add(countdownSprite);
     
@@ -290,6 +307,8 @@ function startCountdown()
         FlxTimer.loop(Conductor.crochet / 1000, (loop) -> {
             if (loop == 5)
             {
+                remove(countdownSprite);
+                
                 allowSongPositionUpdate = false;
 
                 startSong();
@@ -312,15 +331,15 @@ function startCountdown()
                     FlxTween.cancelTweensOf(countdownSprite);
                     FlxTween.cancelTweensOf(countdownSprite.scale);
 
-                    countdownSprite.scale.x = countdownSprite.scale.y = 1;
-                    countdownSprite.alpha = 1;
+                    countdownSprite.scale.x = countdownSprite.scale.y = HUD.countdown.scale;
+                    countdownSprite.alpha = HUD.countdown.alpha;
 
                     countdownSprite.updateHitbox();
                     countdownSprite.screenCenter();
 
-                    FlxTween.tween(countdownSprite.scale, {x: 0.9, y: 0.9}, Conductor.crochet / 1250, {ease: FlxEase.backOut});
+                    FlxTween.tween(countdownSprite.scale, {x: HUD.countdown.endScale, y: HUD.countdown.endScale}, Conductor.crochet / 1000 * HUD.countdown.beats, {ease: easeByString(HUD.countdown.scaleEase)});
 
-                    FlxTween.tween(countdownSprite, {alpha: 0}, Conductor.crochet / 1250, {ease: FlxEase.cubeIn});
+                    FlxTween.tween(countdownSprite, {alpha: HUD.countdown.endAlpha}, Conductor.crochet / 1000 * HUD.countdown.beats, {ease: easeByString(HUD.countdown.alphaEase)});
 
                     characters.forEachAlive((char) -> {
                         char.dance(loop - 1);
@@ -333,6 +352,87 @@ function startCountdown()
     }
 
     // POST
+}
+
+function easeByString(?ease:String = '')
+{
+    return switch(ease.toLowerCase().trim())
+    {
+        case 'backin':
+            FlxEase.backIn;
+        case 'backinout':
+            FlxEase.backInOut;
+        case 'backout':
+            FlxEase.backOut;
+        case 'bouncein':
+            FlxEase.bounceIn;
+        case 'bounceinout':
+            FlxEase.bounceInOut;
+        case 'bounceout':
+            FlxEase.bounceOut;
+        case 'circin':
+            FlxEase.circIn;
+        case 'circinout':
+            FlxEase.circInOut;
+        case 'circout':
+            FlxEase.circOut;
+        case 'cubein':
+            FlxEase.cubeIn;
+        case 'cubeinout':
+            FlxEase.cubeInOut;
+        case 'cubeout':
+            FlxEase.cubeOut;
+        case 'elasticin':
+            FlxEase.elasticIn;
+        case 'elasticinout':
+            FlxEase.elasticInOut;
+        case 'elasticout':
+            FlxEase.elasticOut;
+        case 'expoin':
+            FlxEase.expoIn;
+        case 'expoinout':
+            FlxEase.expoInOut;
+        case 'expoout':
+            FlxEase.expoOut;
+        case 'quadin':
+            FlxEase.quadIn;
+        case 'quadinout':
+            FlxEase.quadInOut;
+        case 'quadout':
+            FlxEase.quadOut;
+        case 'quartin':
+            FlxEase.quartIn;
+        case 'quartinout':
+            FlxEase.quartInOut;
+        case 'quartout':
+            FlxEase.quartOut;
+        case 'quintin':
+            FlxEase.quintIn;
+        case 'quintinout':
+            FlxEase.quintInOut;
+        case 'quintout':
+            FlxEase.quintOut;
+        case 'sinein':
+            FlxEase.sineIn;
+        case 'sineinout':
+            FlxEase.sineInOut;
+        case 'sineout':
+            FlxEase.sineOut;
+        case 'smoothstepin':
+            FlxEase.smoothStepIn;
+        case 'smoothstepinout':
+            FlxEase.smoothStepInOut;
+        case 'smoothstepout':
+            FlxEase.smoothStepOut;
+        case 'smootherstepin':
+            FlxEase.smootherStepIn;
+        case 'smootherstepinout':
+            FlxEase.smootherStepInOut;
+        case 'smootherstepout':
+            FlxEase.smootherStepOut;
+        default:
+            FlxEase.linear;
+    }
 }
 
 function changeCharacter(char:Character, newChar:String)
@@ -425,6 +525,11 @@ function startSong()
         if (voice != null)
             char.vocals.push(voice);
     });
+
+    for (voice in vocals)
+        voice.play();
+
+    Conductor.songPosition = 0;
 }
 
 function onUpdate(elapsed:Float)
@@ -664,8 +769,13 @@ function initStrumLines()
                     accuracyMod += ratingToAccuracy(rating);
 
                     totalPlayed++;
+
+                    combo++;
+
+                    displayCombo(rating);
                 }
             }
+
             return null;
         };
 
@@ -675,6 +785,8 @@ function initStrumLines()
             {
                 if (note.type == 'note')
                 {
+                    combo = 0;
+
                     health = health - note.missHealth;
 
                     misses++;
@@ -682,11 +794,86 @@ function initStrumLines()
                     totalPlayed++;
                 }
             }
+
             return null;
         };
 
         strumLines.add(strumLine);
     }
+}
+
+var comboGroup:FlxTypedSpriteGroup<FlxSprite>;
+
+var comboSprite:FlxSprite;
+
+var comboNumbers:Array<FlxSprite> = [];
+
+function cacheCombo()
+{
+    for (obj in ['sick', 'good', 'bad', 'sick'].concat([for (i in 0...10) '$i']))
+        Paths.image('hud/' + STAGE.hud + '/combo/' + obj);
+    
+    add(comboGroup = new FlxTypedSpriteGroup<FlxSprite>(HUD.combo.position.x, HUD.combo.position.y));
+    comboGroup.cameras = [camHUD];
+
+    comboSprite = new FlxSprite();
+    comboSprite.scale.x = comboSprite.scale.y = HUD.combo.scale;
+
+    comboGroup.add(comboSprite);
+
+    for (i in 0...4)
+    {
+        final number:FlxSprite = new FlxSprite();
+        number.scale.x = number.scale.y = HUD.combo.numberScale;
+        
+        comboGroup.add(number);
+
+        comboNumbers.push(number);
+    }
+
+    for (spr in comboGroup)
+    {
+        spr.alpha = 0;
+
+        spr.antialiasing = HUD.antialiasing && ClientPrefs.data.antialiasing;
+    }
+}
+
+function displayCombo(rating:Rating)
+{
+    final path:String = 'hud/' + STAGE.hud + '/combo';
+
+    FlxTween.cancelTweensOf(comboSprite);
+
+    comboSprite.loadGraphic(Paths.image(path + '/' + Std.string(rating)));
+    comboSprite.alpha = HUD.combo.alpha;
+    comboSprite.updateHitbox();
+    comboSprite.x = comboGroup.x - comboSprite.width / 2;
+    comboSprite.y = comboGroup.y - comboSprite.height / 2;
+
+    FlxTween.tween(comboSprite, {x: comboSprite.x + FlxG.random.float(-HUD.combo.endPosition.x, HUD.combo.endPosition.x), y: comboSprite.y + HUD.combo.endPosition.y, alpha: 0}, HUD.combo.duration, {ease: easeByString(HUD.combo.ease)});
+
+    final comboString:String = '${combo % 10000}'.lpad('0', 4);
+
+    final numberOffset:Float = FlxG.random.float(-HUD.combo.numberEndPosition.x, HUD.combo.numberEndPosition.x);
+
+    for (index => number in comboNumbers)
+    {
+        FlxTween.cancelTweensOf(number);
+
+        number.loadGraphic(Paths.image(path + '/' + comboString.charAt(index)));
+        number.updateHitbox();
+        number.alpha = HUD.combo.numberAlpha;
+        number.x = comboGroup.x + HUD.combo.numberPosition.x + HUD.combo.space * index - number.width / 2;
+        number.y = comboGroup.y + HUD.combo.numberPosition.y - number.height / 2;
+
+        FlxTween.tween(number, {x: number.x + numberOffset, y: number.y + HUD.combo.numberEndPosition.y, alpha: 0}, HUD.combo.numberDuration, {ease: easeByString(HUD.combo.numberEase)});
+    }
+}
+
+function postDestroy()
+{
+    Paths.cachedJson.clear();
 }
 
 function ratingToAccuracy(rating:Rating):Float
