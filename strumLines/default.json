@@ -104,13 +104,13 @@
     "strumFramerate": 24,
     "splashFramerate": 24,
     "splashTextures": [
-        "noteSplashes"
+        "default"
     ],
     "noteTextures": [
-        "NOTE_assets"
+        "default"
     ],
     "strumTextures": [
-        "NOTE_assets"
+        "default"
     ],
     "format": "ale-strumline-v0.1"
 }

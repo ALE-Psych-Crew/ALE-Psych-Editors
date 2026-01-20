@@ -78,7 +78,7 @@ class NeoNote extends scripting.haxe.ScriptSprite
         this.singAnimation = config.sing;
         this.missAnimation = config.miss;
 
-        frames = Paths.getMultiAtlas([for (skin in skins) 'noteSkins/' + skin]);
+        frames = Paths.getMultiAtlas([for (skin in skins) 'notes/' + skin]);
 
         switch (type)
         {

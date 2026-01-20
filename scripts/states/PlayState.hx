@@ -821,7 +821,7 @@ function cacheCombo()
 
     comboGroup.add(comboSprite);
 
-    for (i in 0...4)
+    for (i in 0...3)
     {
         final number:FlxSprite = new FlxSprite();
         number.scale.x = number.scale.y = HUD.combo.numberScale;
@@ -853,7 +853,7 @@ function displayCombo(rating:Rating)
 
     FlxTween.tween(comboSprite, {x: comboSprite.x + FlxG.random.float(-HUD.combo.endPosition.x, HUD.combo.endPosition.x), y: comboSprite.y + HUD.combo.endPosition.y, alpha: 0}, HUD.combo.duration, {ease: easeByString(HUD.combo.ease)});
 
-    final comboString:String = '${combo % 10000}'.lpad('0', 4);
+    final comboString:String = '${combo % 1000}'.lpad('0', 3);
 
     final numberOffset:Float = FlxG.random.float(-HUD.combo.numberEndPosition.x, HUD.combo.numberEndPosition.x);
 
