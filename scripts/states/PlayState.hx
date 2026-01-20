@@ -11,6 +11,7 @@ import utils.ALEFormatter;
 import haxe.Timer;
 
 import haxe.ds.StringMap;
+import haxe.ds.GenericStack;
 
 import funkin.visuals.game.StrumLine;
 import funkin.visuals.game.NeoCharacter as Character;
@@ -66,6 +67,12 @@ var players:FlxTypedGroup<Character>;
 var extras:FlxTypedGroup<Character>;
 
 var strumLines:FlxTypedGroup<StrumLine>;
+
+var strums:FlxTypedGroup<Strum>;
+
+var strumLineNotes(get, never):FlxTypedGroup<Strum>;
+function get_strumLineNotes():FlxTypedGroup
+    return strums;
 
 var cameraCharacters:Array<Array<Character>> = [];
 
@@ -192,8 +199,8 @@ final difficulty:String;
 
 function new(?songName:String, ?diff:String)
 {
-    song = songName ?? 'bopeebo';
-    difficulty = diff ?? 'normal';
+    song = songName ?? 'bopibu';
+    difficulty = diff ?? 'erect';
 
     CHART ??= ALEFormatter.getSong(song, difficulty);
     STAGE ??= ALEFormatter.getStage(CHART.stage);
@@ -206,12 +213,18 @@ var camGame:FXCamera;
 
 function onCreate()
 {
-    ClientPrefs.data.downScroll = true;
+    ClientPrefs.data.downScroll = false;
 
-    ClientPrefs.data.botplay = true;
+    ClientPrefs.data.botplay = false;
 
     initCamera();
-    initSong();
+
+    initStrumLines();
+
+    botplay = ClientPrefs.data.botplay;
+
+    initEvents();
+
     initStage();
     initControls();
     initHud();
@@ -220,8 +233,29 @@ function onCreate()
     cacheSounds();
 
     startCountdown();
+}
 
-    botplay = ClientPrefs.data.botplay;
+final eventsListStack:GenericStack<ALEEventList> = new GenericStack();
+
+function initEvents()
+{
+    final tempEvents:Array<Array<Dynamic>> = CHART.events.copy();
+
+    for (i in 0...tempEvents.length)
+    {
+        final targetEvent:Array<Dynamic> = tempEvents[tempEvents.length - 1 - i];
+
+        eventsListStack.add({
+            time: targetEvent[0],
+            events: [
+                for (event in targetEvent[1])
+                {
+                    id: event.shift(),
+                    values: event
+                }
+            ]
+        });
+    }
 }
 
 final soundsMap:StringMap<Sound> = new StringMap();
@@ -230,7 +264,7 @@ function cacheSounds()
 {
     soundsMap.set('::MUSIC', Paths.inst('songs/' + song));
 
-    final voices:Sound = Paths.voices('songs/' + song);
+    final voices:Sound = Paths.voices('songs/' + song, '', false, false);
 
     if (voices != null)
         soundsMap.set('::VOICES', voices);
@@ -539,14 +573,22 @@ function onUpdate(elapsed:Float)
     if ((FlxG.sound.music != null && FlxG.sound.music.playing) || allowSongPositionUpdate)
         Conductor.songPosition += elapsed * 1000;
 
+    while (!eventsListStack.isEmpty() && eventsListStack.first().time <= Conductor.songPosition)
+        for (event in eventsListStack.pop().events)
+            eventHit(event);
+
     scoreText.text = botplay ? 'BOTPLAY' : 'Score: ' + score + '    Misses: ' + misses + '    Accuracy: ' + CoolUtil.floorDecimal(accuracy, 2) + '%';
 
     if (Controls.RESET)
     {
-        stopMusic();
+        pauseMusic();
         
         FlxG.resetState();
     }
+}
+
+function eventHit(event:ALEEvent)
+{
 }
 
 function onSectionHit()
@@ -616,22 +658,16 @@ function onDestroy()
     FlxG.stage.removeEventListener('keyDown', justPressedKey);
     FlxG.stage.removeEventListener('keyUp', justReleasedKey);
     
-    stopMusic();
+    pauseMusic();
 }
 
-function stopMusic()
+function pauseMusic()
 {
-    FlxG.sound.music?.stop();
+    FlxG.sound.music?.pause();
 
     for (sound in vocals)
-    {
-        if (sound == null)
-            continue;
-
-        sound.stop();
-
-        FlxG.sound.list.remove(sound, true);
-    }
+        if (sound != null)
+            sound.pause();
 }
 
 function initHud()
@@ -692,11 +728,13 @@ function updateHealth()
 
     if (health <= 0)
     {
-        stopMusic();
+        pauseMusic();
 
         CoolUtil.openSubState(new CustomSubState(CoolVars.data.gameOverScreen));
     }
 }
+
+var spawnNotes:Bool = false;
 
 function initStrumLines()
 {
@@ -704,7 +742,7 @@ function initStrumLines()
 
     Conductor.bpm = CHART.bpm;
 
-    if (true)
+    if (spawnNotes)
     {
         for (section in CHART.sections)
         {
@@ -738,6 +776,8 @@ function initStrumLines()
     add(strumLines = new FlxTypedGroup<StrumLine>());
 
     strumLines.cameras = [camHUD];
+
+    strums = new FlxTypedGroup<Strum>();
 
     for (strlIndex => strl in CHART.strumLines)
     {
@@ -801,6 +841,9 @@ function initStrumLines()
         };
 
         strumLines.add(strumLine);
+
+        for (strum in strumLine.strums)
+            strums.add(strum);
     }
 }
 
@@ -1039,13 +1082,6 @@ function justPressedKey(event:KeyboardEvent)
 function justReleasedKey(event:KeyboardEvent)
 {
     strumLines.forEachAlive(strl -> strl.justReleasedKey(event.keyCode));
-}
-
-function initSong()
-{
-    initStrumLines();
-
-    Conductor.bpm = CHART.bpm;
 }
 
 function initCamera()

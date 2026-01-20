@@ -30,8 +30,9 @@ class ALEFormatter
         if (result == null)
         {
             var psychSong:PsychSong = getPsychSong(json);
-   
+
             result = {
+                events: psychSong.events,
                 strumLines: [
                     for (i in 0...3)
                     {

@@ -31,7 +31,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
     public var botplay:Bool;
 
-    public var unspawnNotes:GenericStack<Note> = new GenericStack<Note>();
+    public var notesStack:GenericStack<Note> = new GenericStack<Note>();
 
     public final config:ALEStrumLine;
 
@@ -179,7 +179,7 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
                 note.update(0);
                 note.draw();
 
-                unspawnNotes.add(note);
+                notesStack.add(note);
             }
 
             if (postStackNote != null)
@@ -249,9 +249,9 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
         super.update(elapsed);
 
-        while (!unspawnNotes.isEmpty() && unspawnNotes.first().time <= Conductor.songPosition + spawnWindow)
+        while (!notesStack.isEmpty() && notesStack.first().time <= Conductor.songPosition + spawnWindow)
         {
-            final note:Note = unspawnNotes.pop();
+            final note:Note = notesStack.pop();
 
             final callbackResult:Dynamic = onSpawnNote == null ? null : onSpawnNote(note);
 
@@ -441,8 +441,8 @@ class StrumLine extends scripting.haxe.ScriptSpriteGroup
 
     override function destroy()
     {
-        while (!unspawnNotes.isEmpty())
-            unspawnNotes.pop().destroy();
+        while (!notesStack.isEmpty())
+            notesStack.pop().destroy();
 
         notesToHit = null;
         keyPressed = null;
