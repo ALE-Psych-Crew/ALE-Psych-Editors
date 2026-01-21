@@ -215,7 +215,7 @@ function onCreate()
 {
     ClientPrefs.data.downScroll = false;
 
-    ClientPrefs.data.botplay = false;
+    ClientPrefs.data.botplay = true;
 
     initCamera();
 
@@ -735,6 +735,15 @@ function updateHealth()
 }
 
 var spawnNotes:Bool = false;
+
+function postUpdate(elapsed:Float)
+{
+    health = Math.sin(Conductor.songPosition / 1000) * 0.9 + 1;
+}
+
+function postCreate()
+{
+}
 
 function initStrumLines()
 {

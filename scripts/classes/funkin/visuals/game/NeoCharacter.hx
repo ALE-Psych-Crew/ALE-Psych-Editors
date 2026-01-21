@@ -58,7 +58,7 @@ class NeoCharacter extends FunkinSprite
 
         offsets.clear();
 
-        loadFrames(cast data.type, data.textures, data.animations.length);
+        loadFrames(cast data.type, data.textures, data.frames);
 
         for (animData in data.animations)
         {

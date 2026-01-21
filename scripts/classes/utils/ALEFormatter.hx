@@ -250,8 +250,8 @@ class ALEFormatter
 
         for (anim in psychJson.animations)
             result.animations.push({
-                prefix: anim.name,
                 name: anim.anim,
+                prefix: anim.name,
                 framerate: anim.fps,
                 loop: anim.loop,
                 indices: anim.indices,
@@ -348,6 +348,7 @@ class ALEFormatter
         return {
             texture: id,
             type: "frames",
+            frames: 2,
             animations: [
                 {
                     percent: 0,
