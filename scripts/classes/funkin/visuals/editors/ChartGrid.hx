@@ -66,6 +66,8 @@ class ChartGrid extends ScriptSpriteGroup
             add(new FlxSprite(0, i * Conductor.stepsPerBeat * cellSize - 1).makeGraphic(bg.width, 2, 0x40FFFFFF));
     }
 
+    var longNote:Null<ChartNote> = null;
+
     override function update(elapsed:Float)
     {
         super.update(elapsed);
@@ -76,6 +78,36 @@ class ChartGrid extends ScriptSpriteGroup
         {
             pointer.x = CoolUtil.snapNumber(mousePos.x, cellSize);
             pointer.y = CoolUtil.snapNumber(mousePos.y, cellSize);
+
+            if (longNote != null)
+                if (pointer.y >= longNote.y)
+                    sections[Conductor.curSection][longNote.index].length = longNote.length = (pointer.y - longNote.y) / cellSize * Conductor.stepCrochet;
+
+            var overlapedNote:ChartNote = null;
+
+            if (Controls.MOUSE_P)
+            {
+                for (note in notes)
+                    if (note != null)
+                        if (FlxG.mouse.overlaps(note, cameras[0]))
+                        {
+                            overlapedNote = note;
+
+                            break;
+                        }
+
+                if (overlapedNote == null)
+                {
+                    addNote();
+                } else {
+                    removeNote(overlapedNote);
+                }
+            }
+        }
+
+        if (Controls.MOUSE_R)
+        {
+            longNote = null;
         }
     }
 
@@ -92,7 +124,7 @@ class ChartGrid extends ScriptSpriteGroup
     {
         sections[Conductor.curSection] ??= [];
         
-        final time:Float = customTime ?? (CoolUtil.snapNumber(Conductor.songPosition - Conductor.bpmChangeMap[Conductor.curBPMIndex].time, Conductor.sectionCrochet) + (pointer.y - y <= 0 ? 0 : ((pointer.y - y) / background.height * Conductor.stepsPerBeat * Conductor.stepCrochet)));
+        final time:Float = customTime ?? (CoolUtil.snapNumber(Conductor.songPosition - Conductor.bpmChangeMap[Conductor.curBPMIndex].time, Conductor.sectionCrochet) + (pointer.y - y <= 0 ? 0 : ((pointer.y - y) / bg.height * Conductor.stepsPerBeat * Conductor.beatsPerSection * Conductor.stepCrochet)));
 
         final data:Int = customData ?? Math.floor((pointer.x - x) / cellSize);
 
@@ -123,6 +155,8 @@ class ChartGrid extends ScriptSpriteGroup
                 length: length,
                 type: type
             });
+
+            longNote = note;
         }
 
         return note;
@@ -134,7 +168,7 @@ class ChartGrid extends ScriptSpriteGroup
 
         notes.group.members.remove(note);
 
-        notesStack.push(note);
+        notesStack.add(note);
     }
 
     public function updateSection(curSection:Float)

@@ -21,7 +21,7 @@ function onHotReloadingConfig()
             addHotReloadingFile('scripts/classes/' + pack.replace('.', '/') + '/' + file);
 }
 
-if (false)
+if (true)
 {
     final window:Window = lime.app.Application.current.window;
 
@@ -134,22 +134,20 @@ function addGrid(id:String):ChartGrid
 function onUpdate(elapsed:Float)
 {
     if (music != null)
-        updateMusicControls(elapsed);
+        updateMusic(elapsed);
+
+    updateCamera(elapsed);
 
     Conductor.songPosition = music == null ? 0 : music.time;
 
     bg.scale.x = bg.scale.y = 1 / camGame.zoom;
-
-    camGame.scroll.x = CoolUtil.fpsLerp(camGame.scroll.x, camPos.x, 0.3);
-
-    camGame.scroll.y = (Conductor.songPosition - Conductor.bpmChangeMap[Conductor.curBPMIndex].time) % Conductor.sectionCrochet / Conductor.stepCrochet * NOTE_SIZE - camPos.offset;
 }
 
 var musicChange(get, never):Float;
 function get_musicChange():Float
     return Controls.SHIFT ? 6000 : 3000;
 
-function updateMusicControls(elapsed:Float)
+function updateMusic(elapsed:Float)
 {
     if (FlxG.keys.justPressed.SPACE)
         if (music.playing)
@@ -157,17 +155,45 @@ function updateMusicControls(elapsed:Float)
         else
             music.play();
         
-    if (Controls.UI_UP || Controls.UI_DOWN)
+    if (Controls.UI_UP || Controls.UI_DOWN || Controls.MOUSE_WHEEL || Controls.UI_LEFT_P || Controls.UI_RIGHT_P)
     {
+        final musicChange:Float = (Controls.SHIFT ? 6000 : 3000) * elapsed;
+
         if (Controls.UI_UP)
-            music.time -= elapsed * musicChange;
+            music.time -= musicChange;
         
         if (Controls.UI_DOWN)
-            music.time += elapsed * musicChange;
+            music.time += musicChange;
 
-        music.time = FlxMath.bound(music.time, 0, music.length);
+        if (Controls.MOUSE_WHEEL)
+            music.time -= FlxG.mouse.wheel * Conductor.stepCrochet;
+
+        if (Controls.UI_LEFT_P || Controls.UI_RIGHT_P)
+            music.time += (Controls.UI_LEFT_P ? -1 : 1) * Conductor.sectionCrochet;
+
+        music.time = FlxMath.bound(music.time, 1, music.length);
 
         if (music.playing)
             music.pause();
     }
+}
+
+function updateCamera(elapsed:Float)
+{
+    if (Controls.MOUSE_WHEEL)
+    {
+        if (Controls.SHIFT)
+        {
+            camPos.x -= FlxG.mouse.wheel * 1000 * elapsed;
+        } else if (Controls.CONTROL) {
+            camPos.zoom += FlxG.mouse.wheel * elapsed * 10 * camGame.zoom;
+
+            camPos.zoom = FlxMath.bound(camPos.zoom, 0.1, 3);
+        }
+    }
+
+    camGame.scroll.x = CoolUtil.fpsLerp(camGame.scroll.x, camPos.x, 0.3);
+    camGame.scroll.y = (Conductor.songPosition - Conductor.bpmChangeMap[Conductor.curBPMIndex].time) % Conductor.sectionCrochet / Conductor.stepCrochet * NOTE_SIZE - camPos.offset;
+
+    camGame.zoom = CoolUtil.fpsLerp(camGame.zoom, camPos.zoom, 0.3);
 }
