@@ -21,7 +21,7 @@ function onHotReloadingConfig()
             addHotReloadingFile('scripts/classes/' + pack.replace('.', '/') + '/' + file);
 }
 
-if (true)
+if (false)
 {
     final window:Window = lime.app.Application.current.window;
 
