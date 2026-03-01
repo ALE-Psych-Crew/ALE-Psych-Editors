@@ -102,7 +102,7 @@ class ChartGrid extends ScriptSpriteGroup
             {
                 for (note in notes)
                     if (note != null)
-                        if (FlxG.mouse.overlaps(note, cameras[0]))
+                        if (FlxG.mouse.overlaps(note.texture, cameras[0]))
                         {
                             overlapedNote = note;
 
