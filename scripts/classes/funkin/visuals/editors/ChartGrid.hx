@@ -85,7 +85,7 @@ class ChartGrid extends ScriptSpriteGroup
 
             var overlapedNote:ChartNote = null;
 
-            if (Controls.MOUSE_P)
+            if (Controls.MOUSE_P || FlxG.mouse.justPressedRight)
             {
                 for (note in notes)
                     if (note != null)
@@ -96,11 +96,19 @@ class ChartGrid extends ScriptSpriteGroup
                             break;
                         }
 
-                if (overlapedNote == null)
+                if (Controls.MOUSE_P)
                 {
-                    addNote();
-                } else {
-                    removeNote(overlapedNote);
+                    if (overlapedNote == null)
+                    {
+                        addNote();
+                    } else {
+                        removeNote(overlapedNote);
+                    }
+                }
+                
+                if (FlxG.mouse.justPressedRight)
+                {
+                    debugTrace('oso');
                 }
             }
         }
@@ -135,7 +143,7 @@ class ChartGrid extends ScriptSpriteGroup
         var note:ChartNote;
 
         if (notesStack.isEmpty())
-            note = new ChartNote(cellSize);
+            note = new ChartNote(cellSize, this.data);
         else
             note = notesStack.pop();
 

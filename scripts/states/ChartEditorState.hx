@@ -155,7 +155,7 @@ function updateMusic(elapsed:Float)
         else
             music.play();
         
-    if (Controls.UI_UP || Controls.UI_DOWN || Controls.MOUSE_WHEEL || Controls.UI_LEFT_P || Controls.UI_RIGHT_P)
+    if (Controls.UI_UP || Controls.UI_DOWN || (Controls.MOUSE_WHEEL && !Controls.CONTROL && !Controls.SHIFT) || Controls.UI_LEFT_P || Controls.UI_RIGHT_P)
     {
         final musicChange:Float = (Controls.SHIFT ? 6000 : 3000) * elapsed;
 
@@ -184,11 +184,11 @@ function updateCamera(elapsed:Float)
     {
         if (Controls.SHIFT)
         {
-            camPos.x -= FlxG.mouse.wheel * 1000 * elapsed;
+            camPos.x -= FlxG.mouse.wheel * 100 * elapsed * NOTE_SIZE;
         } else if (Controls.CONTROL) {
             camPos.zoom += FlxG.mouse.wheel * elapsed * 10 * camGame.zoom;
 
-            camPos.zoom = FlxMath.bound(camPos.zoom, 0.1, 3);
+            camPos.zoom = FlxMath.bound(camPos.zoom, 0.1, 5);
         }
     }
 

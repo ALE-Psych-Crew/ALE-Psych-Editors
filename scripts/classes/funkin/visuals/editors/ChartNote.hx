@@ -2,6 +2,11 @@ package funkin.visuals.editors;
 
 import scripting.haxe.ScriptSpriteGroup;
 
+import funkin.visuals.shaders.RGBPalette;
+import funkin.visuals.shaders.RGBShaderReference;
+
+import ale.ui.ALEUIUtils;
+
 class ChartNote extends ScriptSpriteGroup
 {
     public var cellSize:Float;
@@ -11,7 +16,15 @@ class ChartNote extends ScriptSpriteGroup
 
     public var time:Float;
 
+    public var config:ALEStrumLine;
+
     public var data:Int;
+
+    final SELECT_SHADER:Array<Int> = [
+        ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, -50),
+        ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, 50),
+        ALEUIUtils.adjustColorBrightness(ALEUIUtils.COLOR, 25)
+    ];
     
     public var length(default, set):Float;
     function set_length(value:Float):Float
@@ -30,15 +43,16 @@ class ChartNote extends ScriptSpriteGroup
 
     public var index:Int;
 
-    public function new(cellSize:Float)
+    public function new(cellSize:Float, config:ALEStrumLine)
     {
         super();
+
+        this.config = config;
 
         this.cellSize = cellSize;
 
         texture = new FlxSprite();
-
-        texture.makeGraphic(cellSize, cellSize, FlxColor.CYAN);
+        texture.frames = Paths.getMultiAtlas([for (skin in config.noteTextures) 'notes/' + skin]);
 
         tail = new FlxSprite().makeGraphic(Math.floor(cellSize / 5), 1, FlxColor.GRAY);
 
@@ -48,6 +62,11 @@ class ChartNote extends ScriptSpriteGroup
 
     public function reset(time:Float, data:Int, length:Float, type:String)
     {
+        final anim:String = config.strums[data].note;
+
+        texture.animation.addByPrefix(anim, anim, 1);
+        texture.animation.play(anim, true);
+
         texture.setGraphicSize(cellSize, cellSize);
         texture.updateHitbox();
 
