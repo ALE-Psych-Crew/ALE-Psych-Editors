@@ -33,6 +33,8 @@ class ChartGrid extends ScriptSpriteGroup
 
     public var notes:FlxTypedSpriteGroup<ChartNote>;
 
+    public var selectedNotes:Array<ChartNote> = [];
+
     public var pointer:FlxSprite;
 
     public var sections:Array<Array<GridNote>> = [];
@@ -74,6 +76,10 @@ class ChartGrid extends ScriptSpriteGroup
 
         final mousePos:FlxPoint = FlxG.mouse.getWorldPosition(cameras[0]);
 
+        if (FlxG.keys.justPressed.Q || FlxG.keys.justPressed.E)
+            for (selected in selectedNotes)
+                selected.length += Conductor.stepCrochet * (FlxG.keys.justPressed.Q ? -1 : 1);
+
         if (pointer.visible)
         {
             pointer.x = CoolUtil.snapNumber(mousePos.x, cellSize);
@@ -108,7 +114,15 @@ class ChartGrid extends ScriptSpriteGroup
                 
                 if (FlxG.mouse.justPressedRight)
                 {
-                    debugTrace('oso');
+                    if (overlapedNote == null)
+                    {
+                        clearSelectedNotes();
+                    } else {
+                        if (overlapedNote.selected)
+                            deSelectNote(overlapedNote);
+                        else
+                            selectNote(overlapedNote);
+                    }
                 }
             }
         }
@@ -130,6 +144,8 @@ class ChartGrid extends ScriptSpriteGroup
 
     function addNote(?customTime:Int, ?customData:Int, ?customLength:Float, ?customType:String, ?push:Bool):ChartNote
     {
+        clearSelectedNotes();
+
         sections[Conductor.curSection] ??= [];
         
         final time:Float = customTime ?? (CoolUtil.snapNumber(Conductor.songPosition - Conductor.bpmChangeMap[Conductor.curBPMIndex].time, Conductor.sectionCrochet) + (pointer.y - y <= 0 ? 0 : ((pointer.y - y) / bg.height * Conductor.stepsPerBeat * Conductor.beatsPerSection * Conductor.stepCrochet)));
@@ -165,6 +181,8 @@ class ChartGrid extends ScriptSpriteGroup
             });
 
             longNote = note;
+
+            selectNote(note);
         }
 
         return note;
@@ -177,10 +195,40 @@ class ChartGrid extends ScriptSpriteGroup
         notes.group.members.remove(note);
 
         notesStack.add(note);
+
+        deSelectNote(note);
+    }
+
+    function selectNote(note:ChartNote)
+    {
+        if (note.selected)
+            return;
+
+        selectedNotes.push(note);
+
+        note.selected = true;
+    }
+
+    function deSelectNote(note:ChartNote)
+    {
+        if (!note.selected)
+            return;
+
+        selectedNotes.remove(note);
+
+        note.selected = false;
+    }
+
+    function clearSelectedNotes()
+    {
+        for (note in selectedNotes.copy())
+            deSelectNote(note);
     }
 
     public function updateSection(curSection:Float)
     {
+        clearSelectedNotes();
+
         while (notes.members.length > 0)
         {
             var note:ChartNote = notes.members.pop();

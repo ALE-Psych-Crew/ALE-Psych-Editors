@@ -44,6 +44,8 @@ var bg:FlxSprite;
 
 var grids:FlxTypedGroup<ChartGrid>;
 
+var songPositionLine:FlxSprite;
+
 public function new(?data:ALESong, ?songName:String)
 {
     songName ??= 'bopeebo';
@@ -77,6 +79,11 @@ function onCreate()
 
     grids = new FlxTypedGroup<ChartGrid>();
     add(grids);
+
+    songPositionLine = new FlxSprite().makeGraphic(FlxG.width, 3);
+    songPositionLine.scrollFactor.set();
+    add(songPositionLine);
+    songPositionLine.color = FlxColor.GRAY;
 
     for (index => strl in CHART.strumLines)
     {
@@ -141,6 +148,9 @@ function onUpdate(elapsed:Float)
     Conductor.songPosition = music == null ? 0 : music.time;
 
     bg.scale.x = bg.scale.y = 1 / camGame.zoom;
+
+    songPositionLine.y = camPos.offset;
+    songPositionLine.scale.x = 1 / camGame.zoom;
 }
 
 var musicChange(get, never):Float;
