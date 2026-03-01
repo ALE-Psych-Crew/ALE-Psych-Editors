@@ -78,11 +78,14 @@ class ChartGrid extends ScriptSpriteGroup
 
         if (FlxG.keys.justPressed.Q || FlxG.keys.justPressed.E)
             for (selected in selectedNotes)
-                selected.length += Conductor.stepCrochet * (FlxG.keys.justPressed.Q ? -1 : 1);
+                sections[Conductor.curSection][selected.index].length = selected.length = selected.length + Conductor.stepCrochet * (FlxG.keys.justPressed.Q ? -1 : 1);
         
         if (FlxG.keys.justPressed.DELETE)
             for (selected in selectedNotes.copy())
                 removeNote(selected);
+
+        if (Controls.MOUSE_P && !FlxG.mouse.justPressedRight)
+            clearSelectedNotes();
 
         if (pointer.visible)
         {
