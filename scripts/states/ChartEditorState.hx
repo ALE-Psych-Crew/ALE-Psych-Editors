@@ -50,6 +50,8 @@ public function new(?data:ALESong, ?songName:String)
 {
     songName ??= 'bopeebo';
 
+    songName = 'fresh';
+
     song = songName;
 
     data ??= ALEFormatter.getSong(song, 'hard');

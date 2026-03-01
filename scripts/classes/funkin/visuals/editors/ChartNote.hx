@@ -136,10 +136,10 @@ class ChartNote extends ScriptSpriteGroup
 
         if (newHit != hit)
         {
-            hit = newHit;
-
-            if (FlxG.sound.music.playing)
+            if (FlxG.sound.music.playing && newHit)
                 FlxG.sound.play(Paths.sound('editors/noteHit'));
+
+            hit = newHit;
         }
 
         curTime = selected ? curTime + elapsed : 0;
