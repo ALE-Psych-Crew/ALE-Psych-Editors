@@ -118,7 +118,7 @@ class ChartNote extends ScriptSpriteGroup
             textureShader.g = colors[1];
             textureShader.b = colors[2];
             
-            tail.color = textureShader.r;
+            tail.color = selected ? textureShader.g : textureShader.r;
         } else {
             tail.color = FlxColor.WHITE;
         }

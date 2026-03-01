@@ -79,12 +79,16 @@ class ChartGrid extends ScriptSpriteGroup
         if (FlxG.keys.justPressed.Q || FlxG.keys.justPressed.E)
             for (selected in selectedNotes)
                 selected.length += Conductor.stepCrochet * (FlxG.keys.justPressed.Q ? -1 : 1);
+        
+        if (FlxG.keys.justPressed.DELETE)
+            for (selected in selectedNotes.copy())
+                removeNote(selected);
 
         if (pointer.visible)
         {
             pointer.x = CoolUtil.snapNumber(mousePos.x, cellSize);
             pointer.y = CoolUtil.snapNumber(mousePos.y, cellSize);
-
+                
             if (longNote != null)
                 if (pointer.y >= longNote.y)
                     sections[Conductor.curSection][longNote.index].length = longNote.length = (pointer.y - longNote.y) / cellSize * Conductor.stepCrochet;
@@ -240,6 +244,8 @@ class ChartGrid extends ScriptSpriteGroup
         for (index => note in sections[curSection] ?? [])
             if (note != null)
                 addNote(note.time, note.data, note.length, note.type, false).index = index;
+
+        longNote = null;
     }
 
     override function destroy()
