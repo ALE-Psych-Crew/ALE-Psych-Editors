@@ -5,7 +5,7 @@ function onHotReloadingConfig()
             addHotReloadingFile(folder + '/' + file);
 }
 
-if (true)
+if (false)
 {
     final window:Window = lime.app.Application.current.window;
 

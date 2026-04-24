@@ -16,12 +16,12 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
 {
     public var config:JsonStrumLine;
 
-    var grid:MouseSprite;
+    public var grid:MouseSprite;
     var pointer:FlxSprite;
 
     public function new(config:ALESongStrumLine)
     {
-        super(165, 200);
+        super();
 
         this.config = Formatter.getStrumLine(config.type);
 
@@ -29,6 +29,7 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
         add(grid);
 
         pointer = new FlxSprite().makeGraphic(Constants.NOTE_SIZE, Constants.NOTE_SIZE);
+        pointer.alpha = 0.25;
         add(pointer);
         
         grid.onOverlapChange = (over) -> {
@@ -40,6 +41,8 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
         grid.onOverlapChange(false);
 
         regenGrid();
+
+        Conductor.sectionHit.add(onSectionHit);
     }
 
     override function update(elapsed:Float)
@@ -52,19 +55,40 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
             return;
     }
 
+    override function destroy()
+    {
+        super.destroy();
+
+        Conductor.sectionHit.remove(onSectionHit);
+    }
+
+    function onSectionHit(curSection:Int)
+    {
+        regenGrid();
+    }
+
     function updatePointer():Null<PointerData>
     {
         if (!pointer.visible)
             return null;
 
-        final mousePos = FlxG.mouse.getScreenPosition(camera);
+        final mousePos = FlxG.mouse.getWorldPosition(camera);
 
-        pointer.x = CoolUtil.snapNumber(mousePos.x - this.x % Constants.NOTE_SIZE, Constants.NOTE_SIZE);
-        pointer.y = CoolUtil.snapNumber(mousePos.y, Constants.NOTE_SIZE);
+        pointer.x = x + CoolUtil.snapNumber(mousePos.x - x, Constants.NOTE_SIZE);
+        pointer.y = y + CoolUtil.snapNumber(mousePos.y - y, Constants.NOTE_SIZE);
     }
+
+    var prevBeatsPerSection:Int = -1;
+    var prevStepsPerBeat:Int = -1;
 
     function regenGrid()
     {
+        if (prevStepsPerBeat == Conductor.stepsPerBeat && prevBeatsPerSection == Conductor.beatsPerSection)
+            return;
+
+        prevStepsPerBeat = Conductor.stepsPerBeat;
+        prevBeatsPerSection = Conductor.beatsPerSection;
+
         grid.pixels = FlxGridOverlay.createGrid(
             Constants.NOTE_SIZE,
             Constants.NOTE_SIZE,
