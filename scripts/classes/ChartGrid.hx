@@ -10,7 +10,7 @@ import ale.ui.UIUtils;
 
 import utils.Formatter;
 
-import Constants;
+import EditorUtil;
 
 class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
 {
@@ -28,7 +28,7 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
         grid = new MouseSprite();
         add(grid);
 
-        pointer = new FlxSprite().makeGraphic(Constants.NOTE_SIZE, Constants.NOTE_SIZE);
+        pointer = new FlxSprite().makeGraphic(EditorUtil.NOTE_SIZE, EditorUtil.NOTE_SIZE);
         pointer.alpha = 0.25;
         add(pointer);
         
@@ -74,8 +74,8 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
 
         final mousePos = FlxG.mouse.getWorldPosition(camera);
 
-        pointer.x = x + CoolUtil.snapNumber(mousePos.x - x, Constants.NOTE_SIZE);
-        pointer.y = y + CoolUtil.snapNumber(mousePos.y - y, Constants.NOTE_SIZE);
+        pointer.x = x + CoolUtil.snapNumber(mousePos.x - x, EditorUtil.NOTE_SIZE);
+        pointer.y = y + CoolUtil.snapNumber(mousePos.y - y, EditorUtil.NOTE_SIZE);
     }
 
     var prevBeatsPerSection:Int = -1;
@@ -90,10 +90,10 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
         prevBeatsPerSection = Conductor.beatsPerSection;
 
         grid.pixels = FlxGridOverlay.createGrid(
-            Constants.NOTE_SIZE,
-            Constants.NOTE_SIZE,
-            Constants.NOTE_SIZE * config.config.length,
-            Constants.NOTE_SIZE * Conductor.beatsPerSection * Conductor.stepsPerBeat, true,
+            EditorUtil.NOTE_SIZE,
+            EditorUtil.NOTE_SIZE,
+            EditorUtil.NOTE_SIZE * config.config.length,
+            EditorUtil.NOTE_SIZE * Conductor.beatsPerSection * Conductor.stepsPerBeat, true,
             UIUtils.adjustColorBrightness(UIUtils.COLOR, -25),
             UIUtils.adjustColorBrightness(UIUtils.COLOR, -60)
         );

@@ -1,10 +1,12 @@
 package;
 
+import ale.ui.*;
+
 import flixel.input.keyboard.FlxKey;
 
 import utils.Formatter;
 
-import Constants;
+import EditorUtil;
 
 var music(get, never):FlxSound;
 function get_music():FlxSound
@@ -59,6 +61,8 @@ function onCreate()
 
     camGame.scroll.x = cameraData.offset.x;
     camGame.scroll.y = cameraData.offset.y;
+
+    initUI();
 }
 
 function createGrid(data:ALESongStrumLine)
@@ -76,11 +80,10 @@ function createGrid(data:ALESongStrumLine)
         else
             FlxTween.tween(grid, {x: curOffset}, 0.5, {ease: FlxEase.cubeOut});
 
-        if (index == grids.members.length - 1)
-            cameraData.offset.x = -curOffset / 2;
-
-        curOffset += grid.grid.width + Constants.NOTE_SIZE;
+        curOffset += grid.grid.width + EditorUtil.NOTE_SIZE;
     }
+
+    cameraData.offset.x = -FlxG.width / 2 + (curOffset - EditorUtil.NOTE_SIZE) / 2;
 }
 
 function justPressedKey(key:FlxKey)
@@ -96,6 +99,8 @@ function onUpdate(elapsed:Float)
     updateMusic();
 
     updateCamera();
+
+    updateUI(elapsed);
 }
 
 var musicChange(get, never):Float;
@@ -143,8 +148,8 @@ function updateControls(elapsed:Float)
 
 function updateMusic()
 {
-    if (music.time < 0)
-        music.time = 0;
+    if (music.time < 0.1)
+        music.time = 0.1;
 
     if (music.time > music.length)
         music.time = music.length;
@@ -159,7 +164,43 @@ function updateCamera()
     songLine.scale.x = songLine.scale.y = 1 / camGame.zoom;
 
     camGame.scroll.x = CoolUtil.fpsLerp(camGame.scroll.x, cameraData.offset.x, 0.25);
-    camGame.scroll.y = (Conductor.songPosition - Conductor.bpmChangeMap[Conductor.curBPMIndex].time) % Conductor.sectionCrochet / Conductor.stepCrochet * Constants.NOTE_SIZE + cameraData.offset.y;
+    camGame.scroll.y = (Conductor.songPosition - Conductor.bpmChangeMap[Conductor.curBPMIndex].time) % Conductor.sectionCrochet / Conductor.stepCrochet * EditorUtil.NOTE_SIZE + cameraData.offset.y;
 
     songLine.y = -cameraData.offset.y;
+}
+
+
+var uiGroup:FlxTypedGroup<FlxSprite>;
+
+var conductorTab:Tab;
+var conductorTabText:FlxText;
+
+function initUI()
+{
+    uiGroup = new FlxTypedGroup<FlxSprite>();
+    add(uiGroup);
+
+    conductorTabText = new FlxText(10, 10, 0, [for (i in 0...6) ' '].join('\n'), 15);
+    conductorTabText.font = UIUtils.FONT;
+
+    conductorTab = new Tab(0, 0, 250, conductorTabText.height + 20, 'Conductor');
+    EditorUtil.setToMargin(conductorTab, true, true);
+    uiGroup.add(conductorTab);
+
+    conductorTab.add(conductorTabText);
+
+    for (obj in uiGroup)
+        obj.cameras = [camHUD];
+}
+
+function updateUI(elapsed:Float)
+{
+    conductorTabText.text = [
+        'Song Position: ' + Math.floor(Conductor.songPosition),
+        'BPM: ' + Conductor.bpm,
+        'Step: ' + Conductor.curStep,
+        'Beat: ' + Conductor.curBeat,
+        'Section: ' + Conductor.curSection,
+        'Signature: ' + Conductor.beatsPerSection + ' | ' + Conductor.stepsPerBeat
+    ].join('\n');
 }
