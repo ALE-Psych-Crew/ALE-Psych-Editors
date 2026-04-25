@@ -117,18 +117,22 @@ class ChartNote extends scripting.haxe.ScriptedFlxSpriteGroup
 
     var curTime:Float = 0;
 
-    public var lastTime:Float = -1;
+    public var hit:Bool = false;
 
     override function update(elapsed:Float)
     {
         super.update(elapsed);
 
-        if (lastTime != Conductor.songPosition)
-        {
-            if (FlxG.sound.music.playing && lastTime < time && Conductor.songPosition >= time)
-                FlxG.sound.play(Paths.sound('editors/noteHit'), 0.75);
+        final music:FlxSound = FlxG.sound.music;
 
-            lastTime = Conductor.songPosition;
+        if (music.time < time && hit)
+            hit = false;
+        
+        if (music.playing && music.time >= time && !hit)
+        {
+            EditorUtil.playSFX('noteHit');
+
+            hit = true;
         }
 
         final baseAlpha:Float = Conductor.songPosition >= time ? 0.5 : 1;

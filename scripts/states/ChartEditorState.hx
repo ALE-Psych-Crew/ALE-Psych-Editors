@@ -17,7 +17,7 @@ final CHART:ALESong;
 
 final songRoute:String;
 
-function new(?song:String = 'bopeebo', ?diff:String = 'hard', ?chart:ALESong)
+function new(?song:String = 'fresh', ?diff:String = 'hard', ?chart:ALESong)
 {
     CHART = chart ?? Formatter.getSong(song, diff);
 
@@ -28,6 +28,8 @@ function new(?song:String = 'bopeebo', ?diff:String = 'hard', ?chart:ALESong)
     FlxG.sound.playMusic(Paths.inst(songRoute));
 
     music.pause();
+
+    music.time = 0;
 }
 
 final cameraData = {
@@ -54,6 +56,29 @@ function onCreate()
 
     for (strl in CHART.strumLines)
         createGrid(strl);
+
+    for (sectionIndex => section in CHART.sections)
+    {
+        for (note in section.notes)
+        {
+            final grid = grids.members[note[4]];
+
+            if (grid == null)
+                continue;
+
+            grid.sections[sectionIndex] ??= [];
+
+            grid.sections[sectionIndex].push({
+                time: note[0],
+                data: note[1],
+                length: note[2],
+                type: note[3]
+            });
+        }
+    }
+
+    for (grid in grids)
+        grid.createSectionNotes();
 
     songLine = new FlxSprite(0, -1).makeGraphic(FlxG.width, 2);
     songLine.scrollFactor.set();

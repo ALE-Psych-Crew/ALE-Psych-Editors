@@ -73,6 +73,26 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
                 if (note.selected)
                     sections[Conductor.curSection][note.index].length = note.length = note.length + Conductor.stepCrochet * (Controls.anyJustPressed([FlxKey.Q]) ? -1 : 1);
 
+        if (Controls.anyJustPressed([FlxKey.DELETE]))
+        {
+            var playedSound:Bool = false;
+
+            for (note in notes.members.copy())
+            {
+                if (note.selected)
+                {
+                    removeNote(note);
+
+                    if (!playedSound)
+                    {
+                        playedSound = true;
+
+                        EditorUtil.playSFX('noteErase');
+                    }
+                }
+            }
+        }
+
         if (sustain != null)
             if (pointer.y >= sustain.y)
                     sections[Conductor.curSection][sustain.index].length = sustain.length = (pointer.y - sustain.y) / EditorUtil.NOTE_SIZE * Conductor.stepCrochet;
@@ -112,11 +132,17 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
             if (overlapedNote == null)
             {
                 if (Controls.MOUSE_P)
+                {
                     addNote();
+
+                    EditorUtil.playSFX('noteLay', 0.25);
+                }
             } else {
                 if (Controls.MOUSE_P)
                 {
                     removeNote(overlapedNote);
+
+                    EditorUtil.playSFX('noteLay', 0.25, 0.5);
                 } else {
                     overlapedNote.selected = !overlapedNote.selected;
                 }
@@ -193,7 +219,7 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
 
     function removeNote(note:ChartNote, ?delete:Bool = true)
     {
-        note.selected = false;
+        note.hit = note.selected = false;
 
         if (delete)
             sections[Conductor.curSection][note.index] = null;

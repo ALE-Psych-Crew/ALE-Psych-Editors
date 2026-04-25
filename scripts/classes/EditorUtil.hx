@@ -12,6 +12,19 @@ import ale.ui.Tab;
 
 @:unreflective class EditorUtil
 {
+    // Global
+
+    public static function playSFX(sound:String, ?volume:Float = 0.75, ?pitch:Float = 1):FlxSound
+    {
+        final sound:FlxSound = FlxG.sound.play(Paths.sound('editors/' + sound), volume);
+
+        sound.pitch = pitch;
+
+        return sound;
+    }
+
+    // ALE UI
+
     public static final UI_MARGIN:Int = 25;
 
     public static function setToMargin(obj:FlxSprite, ?right:Bool = false, ?down:Bool = false)
