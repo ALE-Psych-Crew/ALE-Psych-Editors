@@ -36,6 +36,16 @@ import ale.ui.Tab;
             obj.y += UIUtils.OBJECT_SIZE;
     }
 
+    public static function createLabel(obj:FlxSprite, text:String):FlxText
+    {
+        final text:FlxText = new FlxText(obj.x, obj.y, 0, text + ': ', 15);
+        text.font = UIUtils.FONT;
+
+        obj.y += text.height;
+
+        return text;
+    }
+
     // ChartEditor
 
     public static final NOTE_SIZE:Int = 50;

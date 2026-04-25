@@ -4,6 +4,7 @@ import ale.ui.*;
 
 import flixel.input.keyboard.FlxKey;
 import flixel.util.FlxStringUtil;
+import flixel.util.FlxGradient;
 
 import utils.Formatter;
 
@@ -36,11 +37,13 @@ final cameraData = {
     zoom: 1,
     offset: {
         x: 0,
-        y: -200
+        y: -250
     }
 };
 
 var grids:FlxTypedGroup<ChartGrid>;
+
+var bg:FlxSprite;
 
 var songLine:FlxSprite;
 
@@ -54,6 +57,10 @@ function onCreate()
 
     Conductor.beatsPerSection = CHART.beatsPerSection;
     Conductor.stepsPerBeat = CHART.stepsPerBeat;
+
+    bg = FlxGradient.createGradientFlxSprite(FlxG.width, FlxG.height, [FlxColor.BLACK, UIUtils.adjustColorBrightness(UIUtils.COLOR, -65)]);
+    bg.scrollFactor.set();
+    add(bg);
 
     grids = new FlxTypedGroup<ChartGrid>();
     add(grids);
@@ -133,7 +140,7 @@ function createGrid(data:ALESongStrumLine)
         curOffset += grid.grid.width + EditorUtil.NOTE_SIZE;
     }
 
-    cameraData.offset.x = -FlxG.width / 2 + (curOffset - EditorUtil.NOTE_SIZE) / 2;
+    cameraData.offset.x = -FlxG.width / 2 + (curOffset - EditorUtil.NOTE_SIZE) / 2 + 150;
 }
 
 function justPressedKey(key:FlxKey)
@@ -178,7 +185,7 @@ function updateControls(elapsed:Float)
     {
         if (Controls.CONTROL)
         {
-            cameraData.zoom += FlxG.mouse.wheel * 0.1 * camGame.zoom;
+            cameraData.zoom = FlxMath.bound(cameraData.zoom + FlxG.mouse.wheel * 0.1 * camGame.zoom, 0.1, 5);
         } else if (Controls.SHIFT) {
             cameraData.offset.x -= FlxG.mouse.wheel * 100 / camGame.zoom;
         } else {
@@ -211,7 +218,7 @@ function updateCamera()
 {
     camGame.zoom = CoolUtil.fpsLerp(camGame.zoom, cameraData.zoom, 0.25);
 
-    songLine.scale.x = songLine.scale.y = 1 / camGame.zoom;
+    songLine.scale.x = songLine.scale.y = bg.scale.x = bg.scale.y = 1 / camGame.zoom;
 
     camGame.scroll.x = CoolUtil.fpsLerp(camGame.scroll.x, cameraData.offset.x, 0.25);
     camGame.scroll.y = (Conductor.songPosition - Conductor.bpmChangeMap[Conductor.curBPMIndex].time) % Conductor.sectionCrochet / Conductor.stepCrochet * EditorUtil.NOTE_SIZE + cameraData.offset.y;
@@ -219,6 +226,10 @@ function updateCamera()
     songLine.y = -cameraData.offset.y;
 }
 
+
+var mainTab:Tab;
+
+var mainTabSongBPM:DropDownMenu;
 
 var conductorTab:Tab;
 var conductorTabText:FlxText;
@@ -228,12 +239,24 @@ function initUI()
     uiGroup = new FlxTypedGroup<FlxSprite>();
     add(uiGroup);
 
+    mainTab = new MultiTab(0, 0, 300, 250, ['Charting', 'Note', 'Section']);
+    mainTab.curGroup = 'Section';
+    uiGroup.add(mainTab);
+
+    EditorUtil.setToMargin(mainTab, true);
+
+    mainTabSongBPM = new NumericStepper(10, 10, 1, 1000, Conductor.bpm, 0.1);
+
+    mainTab.addObj('Section', EditorUtil.createLabel(mainTabSongBPM, 'BPM'));
+    mainTab.addObj('Section', mainTabSongBPM);
+
     conductorTabText = new FlxText(10, 10, 0, [for (i in 0...6) ' '].join('\n'), 15);
     conductorTabText.font = UIUtils.FONT;
 
     conductorTab = new Tab(0, 0, 170, conductorTabText.height + 20, 'Conductor');
-    EditorUtil.setToMargin(conductorTab, true, true);
     uiGroup.add(conductorTab);
+
+    EditorUtil.setToMargin(conductorTab, true, true);
 
     conductorTab.add(conductorTabText);
 

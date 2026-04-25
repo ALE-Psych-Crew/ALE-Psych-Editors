@@ -74,7 +74,7 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
                 if (note.selected)
                     sections[Conductor.curSection][note.index].length = note.length = note.length + Conductor.stepCrochet * (Controls.anyJustPressed([FlxKey.Q]) ? -1 : 1);
 
-        if (Controls.anyJustPressed([FlxKey.DELETE]))
+        if (Controls.anyJustPressed([FlxKey.DELETE]) || (Controls.CONTROL && Controls.anyJustPressed([FlxKey.X])))
         {
             var playedSound:Bool = false;
 
