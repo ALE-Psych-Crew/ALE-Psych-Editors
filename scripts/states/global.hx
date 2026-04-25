@@ -7,6 +7,10 @@ function onHotReloadingConfig()
 
 if (true)
 {
+    final oldFullScreen:Bool = FlxG.fullscreen;
+
+    FlxG.fullscreen = false;
+
     final window:Window = lime.app.Application.current.window;
 
     final screenSize:FlxPoint = flixel.math.FlxPoint.get(1920, 1080);
@@ -15,4 +19,6 @@ if (true)
     window.height = screenSize.y / 2 * 0.9;
     window.x = screenSize.x / 4 - window.width / 2;
     window.y = screenSize.y / 4 - window.height / 2 + 40;
+
+    FlxG.fullscreen = oldFullScreen;
 }

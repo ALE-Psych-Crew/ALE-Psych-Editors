@@ -15,14 +15,20 @@ class ChartNote extends scripting.haxe.ScriptedFlxSpriteGroup
 {
     var strumLineConfig:JsonStrumLineConfig;
 
-    var texture:FunkinSprite;
+    public var note:FunkinSprite;
+
     var sustain:FlxSprite;
 
-    public var textureShader:RGBShaderReference;
+    public var index:Int = -1;
+
+    public final noteShader:RGBShaderReference;
 
     public var time(default, set):Float;
     function set_time(value:Float):Float
     {
+        if (time == value)
+            return time;
+
         time = value;
 
         y = (time - CoolUtil.snapNumber(Conductor.songPosition - Conductor.bpmChangeMap[Conductor.curBPMIndex].time, Conductor.sectionCrochet)) / Conductor.stepCrochet * EditorUtil.NOTE_SIZE;
@@ -33,15 +39,18 @@ class ChartNote extends scripting.haxe.ScriptedFlxSpriteGroup
     public var data(default, set):Int;
     function set_data(value:Float):Float
     {
+        if (data == value)
+            return data;
+
         data = value % strumLineConfig.length;
 
         final curData = strumLineConfig[data];
 
-        texture.playAnim(curData.note);
-        texture.setGraphicSize(EditorUtil.NOTE_SIZE, EditorUtil.NOTE_SIZE);
-        texture.updateHitbox();
+        note.playAnim(curData.note);
+        note.setGraphicSize(EditorUtil.NOTE_SIZE, EditorUtil.NOTE_SIZE);
+        note.updateHitbox();
 
-        sustain.x = x + texture.width / 2 - sustain.width / 2;
+        sustain.x = x + note.width / 2 - sustain.width / 2;
 
         shaderColor = [for (color in curData.shader) CoolUtil.colorFromString(color)];
 
@@ -55,6 +64,9 @@ class ChartNote extends scripting.haxe.ScriptedFlxSpriteGroup
     public var length(default, set):Float;
     function set_length(value:Float):Float
     {
+        if (length == value)
+            return length;
+
         length = Math.max(value, 0);
 
         sustain.scale.y = length <= 0 ? 1 : EditorUtil.NOTE_SIZE * (length / Conductor.stepCrochet);
@@ -77,10 +89,10 @@ class ChartNote extends scripting.haxe.ScriptedFlxSpriteGroup
         sustain.alpha = 0.75;
         add(sustain);
 
-        texture = SpriteUtil.spriteFromJson(null, Paths.json('data/notes/' + id), 'notes/');
-        add(texture);
+        note = SpriteUtil.spriteFromJson(null, Paths.json('data/notes/' + id), 'notes/');
+        add(note);
         
-		textureShader = new RGBShaderReference(texture, new RGBPalette());
+		noteShader = new RGBShaderReference(note, new RGBPalette());
 
         time = 0;
         data = 0;
@@ -100,15 +112,15 @@ class ChartNote extends scripting.haxe.ScriptedFlxSpriteGroup
     {
         final colors:Null<Array<Int>> = selected ? selectColors : shaderColor;
 
-        textureShader.enabled = colors != null;
+        noteShader.enabled = colors != null;
         
-        if (textureShader.enabled)
+        if (noteShader.enabled)
         {
-            textureShader.r = colors[0];
-            textureShader.g = colors[1];
-            textureShader.b = colors[2];
+            noteShader.r = colors[0];
+            noteShader.g = colors[1];
+            noteShader.b = colors[2];
             
-            sustain.color = selected ? textureShader.g : textureShader.r;
+            sustain.color = selected ? noteShader.g : noteShader.r;
         } else {
             sustain.color = FlxColor.WHITE;
         }
