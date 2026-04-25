@@ -46,6 +46,8 @@ var songLine:FlxSprite;
 
 var notesSelector:Selector;
 
+var uiGroup:FlxTypedGroup<FlxSprite>;
+
 function onCreate()
 {
     Conductor.bpm = CHART.sections[0] != null && CHART.sections[0].bpm && CHART.sections[0].changeBPM ? CHART.sections[0].bpm : CHART.bpm;
@@ -91,6 +93,10 @@ function onCreate()
     notesSelector.selectionCheck = () -> {
         for (grid in grids)
             if (grid.pointer.visible)
+                return false;
+
+        for (obj in uiGroup)
+            if (FlxG.mouse.overlaps(uiGroup, camHUD))
                 return false;
 
         return true;
@@ -213,8 +219,6 @@ function updateCamera()
     songLine.y = -cameraData.offset.y;
 }
 
-
-var uiGroup:FlxTypedGroup<FlxSprite>;
 
 var conductorTab:Tab;
 var conductorTabText:FlxText;
