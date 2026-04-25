@@ -27,7 +27,8 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
     public var config:JsonStrumLine;
 
     public var grid:MouseSprite;
-    var pointer:FlxSprite;
+    
+    public var pointer:FlxSprite;
 
     public var notes:FlxTypedSpriteGroup<ChartNote>;
 
@@ -176,7 +177,8 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
             EditorUtil.NOTE_SIZE,
             EditorUtil.NOTE_SIZE,
             EditorUtil.NOTE_SIZE * config.config.length,
-            EditorUtil.NOTE_SIZE * Conductor.beatsPerSection * Conductor.stepsPerBeat, true,
+            EditorUtil.NOTE_SIZE * Conductor.beatsPerSection * Conductor.stepsPerBeat,
+            true,
             UIUtils.adjustColorBrightness(UIUtils.COLOR, -25),
             UIUtils.adjustColorBrightness(UIUtils.COLOR, -60)
         );

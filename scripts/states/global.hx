@@ -5,7 +5,7 @@ function onHotReloadingConfig()
             addHotReloadingFile(folder + '/' + file);
 }
 
-if (false)
+if (true)
 {
     final oldFullScreen:Bool = FlxG.fullscreen;
 

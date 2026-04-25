@@ -44,6 +44,8 @@ var grids:FlxTypedGroup<ChartGrid>;
 
 var songLine:FlxSprite;
 
+var notesSelector:Selector;
+
 function onCreate()
 {
     Conductor.bpm = CHART.sections[0] != null && CHART.sections[0].bpm && CHART.sections[0].changeBPM ? CHART.sections[0].bpm : CHART.bpm;
@@ -84,6 +86,22 @@ function onCreate()
     songLine.scrollFactor.set();
     songLine.alpha = 0.5;
     add(songLine);
+
+    notesSelector = new Selector();
+    notesSelector.selectionCheck = () -> {
+        for (grid in grids)
+            if (grid.pointer.visible)
+                return false;
+
+        return true;
+    };
+    notesSelector.onSelect = () -> {
+        for (grid in grids)
+            for (note in grid.notes)
+                if (notesSelector.overlaps(note.note))
+                    note.selected = true;
+    };
+    add(notesSelector);
 
     camGame.scroll.x = cameraData.offset.x;
     camGame.scroll.y = cameraData.offset.y;
