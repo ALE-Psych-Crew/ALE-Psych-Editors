@@ -69,7 +69,7 @@ class ChartNote extends scripting.haxe.ScriptedFlxSpriteGroup
 
         length = Math.max(value, 0);
 
-        sustain.scale.y = length <= 0 ? 1 : EditorUtil.NOTE_SIZE * (length / Conductor.stepCrochet);
+        sustain.scale.y = length <= 0 ? 0 : EditorUtil.NOTE_SIZE * (length / Conductor.stepCrochet);
         sustain.updateHitbox();
 
         return length;
@@ -77,7 +77,20 @@ class ChartNote extends scripting.haxe.ScriptedFlxSpriteGroup
 
     public var type:String = '';
 
-    public var selected:Bool = false;
+    public var selected(default, set):Bool;
+    function set_selected(value:Float)
+    {
+        if (selected == value)
+            return selected;
+
+        selected = value;
+
+        updateShader();
+
+        curTime = 0;
+
+        return selected;
+    }
 
     public function new(id:String, strl:JsonStrumLineConfig)
     {
@@ -86,7 +99,7 @@ class ChartNote extends scripting.haxe.ScriptedFlxSpriteGroup
         strumLineConfig = strl;
 
         sustain = new FlxSprite(0, EditorUtil.NOTE_SIZE / 2).makeGraphic(Math.floor(EditorUtil.NOTE_SIZE / 5), 1);
-        sustain.alpha = 0.75;
+        sustain.alpha = 0.25;
         add(sustain);
 
         note = SpriteUtil.spriteFromJson(null, Paths.json('data/notes/' + id), 'notes/');
@@ -98,7 +111,11 @@ class ChartNote extends scripting.haxe.ScriptedFlxSpriteGroup
         data = 0;
         length = 0;
         type = '';
+
+        selected = false;
     }
+
+    var curTime:Float = 0;
 
     public var lastTime:Float = -1;
 
@@ -113,6 +130,19 @@ class ChartNote extends scripting.haxe.ScriptedFlxSpriteGroup
 
             lastTime = Conductor.songPosition;
         }
+
+        final baseAlpha:Float = Conductor.songPosition >= time ? 0.5 : 1;
+
+        if (selected)
+        {
+            curTime += elapsed;
+
+            note.alpha = baseAlpha * 0.75 + Math.sin(curTime * 4) * baseAlpha * 0.25;
+        } else {
+            note.alpha = baseAlpha;
+        }
+
+        sustain.alpha = note.alpha * 0.25;
     }
 
     var shaderColor:Null<Array<FlxColor>>;

@@ -4,6 +4,7 @@ package;
 // import core.structures.JsonStrumLine;
 
 import flixel.addons.display.FlxGridOverlay;
+import flixel.input.keyboard.FlxKey;
 
 import haxe.ds.GenericStack;
 
@@ -32,6 +33,8 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
 
     public var sections:Array<Array<GridNote>> = [];
 
+    public var sustain:ChartNote;
+
     public function new(data:ALESongStrumLine)
     {
         Conductor.sectionHit.add(onSectionHit);
@@ -45,13 +48,12 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
         add(grid);
 
         pointer = new FlxSprite().makeGraphic(EditorUtil.NOTE_SIZE, EditorUtil.NOTE_SIZE);
+        pointer.antialiasing = false;
         pointer.alpha = 0.25;
         add(pointer);
         
         grid.onOverlapChange = (over) -> {
             pointer.visible = over;
-
-            updatePointer();
         };
 
         grid.onOverlapChange(false);
@@ -66,12 +68,34 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
     {
         super.update(elapsed);
 
-        final pointerData = updatePointer();
+        if (Controls.anyJustPressed([FlxKey.Q, FlxKey.E]))
+            for (note in notes)
+                if (note.selected)
+                    sections[Conductor.curSection][note.index].length = note.length = note.length + Conductor.stepCrochet * (Controls.anyJustPressed([FlxKey.Q]) ? -1 : 1);
 
-        if (!pointerData)
+        if (sustain != null)
+            if (pointer.y >= sustain.y)
+                    sections[Conductor.curSection][sustain.index].length = sustain.length = (pointer.y - sustain.y) / EditorUtil.NOTE_SIZE * Conductor.stepCrochet;
+
+        if (Controls.MOUSE_R)
+        {
+            sustain = null;
+        }
+
+        if (!pointer.visible)
+        {
+            if (Controls.MOUSE_P)
+                deSelectNotes();
+
             return;
+        }
 
-        if (Controls.MOUSE_P)
+        final mousePos = FlxG.mouse.getWorldPosition(camera);
+
+        pointer.x = x + CoolUtil.snapNumber(mousePos.x - x, EditorUtil.NOTE_SIZE);
+        pointer.y = y + CoolUtil.snapNumber(mousePos.y - y, EditorUtil.NOTE_SIZE);
+
+        if (Controls.MOUSE_P || FlxG.mouse.justPressedRight)
         {
             var overlapedNote:ChartNote;
 
@@ -87,24 +111,17 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
 
             if (overlapedNote == null)
             {
-                addNote();
+                if (Controls.MOUSE_P)
+                    addNote();
             } else {
-                removeNote(overlapedNote);
+                if (Conductor.MOUSE_P)
+                {
+                    removeNote(overlapedNote);
+                } else {
+                    overlapedNote.selected = !overlapedNote.selected;
+                }
             }
         }
-    }
-
-    function updatePointer():Bool
-    {
-        if (!pointer.visible)
-            return false;
-
-        final mousePos = FlxG.mouse.getWorldPosition(camera);
-
-        pointer.x = x + CoolUtil.snapNumber(mousePos.x - x, EditorUtil.NOTE_SIZE);
-        pointer.y = y + CoolUtil.snapNumber(mousePos.y - y, EditorUtil.NOTE_SIZE);
-
-        return true;
     }
 
     function onSectionHit(curSection:Int)
@@ -141,6 +158,8 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
 
     function addNote(?time:Float, ?data:Int, ?length:Float, ?type:String, ?push:Bool = true):ChartNote
     {
+        deSelectNotes();
+
         final note:ChartNote = notePool.isEmpty() ? new ChartNote(config.notes, config.config) : notePool.pop();
         note.time = time ?? CoolUtil.snapNumber(Conductor.songPosition - Conductor.bpmChangeMap[Conductor.curBPMIndex].time, Conductor.sectionCrochet) + (pointer.y - y <= 0 ? 0 : ((pointer.y - y) / grid.height * Conductor.stepsPerBeat * Conductor.beatsPerSection * Conductor.stepCrochet));
         note.data = data ?? Math.floor((pointer.x - x) / EditorUtil.NOTE_SIZE);
@@ -152,12 +171,18 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
         note.index = sections[Conductor.curSection].length;
 
         if (push)
+        {
             sections[Conductor.curSection].push({
                 time: note.time,
                 data: note.data,
                 length: note.length,
                 type: note.type
             });
+
+            sustain = note;
+
+            note.selected = true;
+        }
 
         notes.add(note);
 
@@ -166,6 +191,8 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
 
     function removeNote(note:ChartNote, ?delete:Bool = true)
     {
+        note.selected = false;
+
         if (delete)
             sections[Conductor.curSection][note.index] = null;
 
@@ -187,6 +214,12 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
         for (index => note in sections[Conductor.curSection])
             if (note != null)
                 addNote(note.time, note.data, note.length, note.type, false).index = index;
+    }
+
+    function deSelectNotes()
+    {
+        for (note in notes)
+            note.selected = false;
     }
 
     override function destroy()
