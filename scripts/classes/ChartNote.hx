@@ -100,6 +100,21 @@ class ChartNote extends scripting.haxe.ScriptedFlxSpriteGroup
         type = '';
     }
 
+    public var lastTime:Float = -1;
+
+    override function update(elapsed:Float)
+    {
+        super.update(elapsed);
+
+        if (lastTime != Conductor.songPosition)
+        {
+            if (FlxG.sound.music.playing && lastTime < time && Conductor.songPosition >= time)
+                FlxG.sound.play(Paths.sound('editors/noteHit'), 0.75);
+
+            lastTime = Conductor.songPosition;
+        }
+    }
+
     var shaderColor:Null<Array<FlxColor>>;
 
     final selectColors:Null<Array<Int>> = [
