@@ -3,6 +3,7 @@ package;
 import ale.ui.*;
 
 import flixel.input.keyboard.FlxKey;
+import flixel.util.FlxStringUtil;
 
 import utils.Formatter;
 
@@ -183,7 +184,7 @@ function initUI()
     conductorTabText = new FlxText(10, 10, 0, [for (i in 0...6) ' '].join('\n'), 15);
     conductorTabText.font = UIUtils.FONT;
 
-    conductorTab = new Tab(0, 0, 250, conductorTabText.height + 20, 'Conductor');
+    conductorTab = new Tab(0, 0, 170, conductorTabText.height + 20, 'Conductor');
     EditorUtil.setToMargin(conductorTab, true, true);
     uiGroup.add(conductorTab);
 
@@ -196,7 +197,7 @@ function initUI()
 function updateUI(elapsed:Float)
 {
     conductorTabText.text = [
-        'Song Position: ' + Math.floor(Conductor.songPosition),
+        'Time: ' + FlxStringUtil.formatTime(Math.floor(Conductor.songPosition) / 1000, true),
         'BPM: ' + Conductor.bpm,
         'Step: ' + Conductor.curStep,
         'Beat: ' + Conductor.curBeat,
