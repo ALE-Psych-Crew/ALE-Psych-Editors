@@ -19,13 +19,16 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
     public var grid:MouseSprite;
     var pointer:FlxSprite;
 
-    public function new(config:ALESongStrumLine)
+    public function new(data:ALESongStrumLine)
     {
+        Conductor.sectionHit.add(onSectionHit);
+     
         super();
 
-        this.config = Formatter.getStrumLine(config.type);
+        this.config = Formatter.getStrumLine(data.type);
 
         grid = new MouseSprite();
+        grid.antialiasing = false;
         add(grid);
 
         pointer = new FlxSprite().makeGraphic(EditorUtil.NOTE_SIZE, EditorUtil.NOTE_SIZE);
@@ -41,8 +44,6 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
         grid.onOverlapChange(false);
 
         regenGrid();
-
-        Conductor.sectionHit.add(onSectionHit);
     }
 
     override function update(elapsed:Float)

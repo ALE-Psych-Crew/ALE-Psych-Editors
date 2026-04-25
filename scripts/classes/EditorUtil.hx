@@ -14,7 +14,7 @@ import ale.ui.Tab;
 {
     public static final UI_MARGIN:Int = 25;
 
-    public static function setToMargin(obj:Dynamic, ?right:Bool = false, ?down:Bool = false)
+    public static function setToMargin(obj:FlxSprite, ?right:Bool = false, ?down:Bool = false)
     {
         obj.x = right ? FlxG.width - obj.width - UI_MARGIN : UI_MARGIN;
         obj.y = down ? FlxG.height - obj.height - UI_MARGIN : UI_MARGIN;
