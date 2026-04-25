@@ -114,7 +114,7 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
                 if (Controls.MOUSE_P)
                     addNote();
             } else {
-                if (Conductor.MOUSE_P)
+                if (Controls.MOUSE_P)
                 {
                     removeNote(overlapedNote);
                 } else {
@@ -126,6 +126,8 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
 
     function onSectionHit(curSection:Int)
     {
+        deSelectNotes();
+
         clearSectionNotes();
 
         createSectionNotes();
