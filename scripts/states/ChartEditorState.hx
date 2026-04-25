@@ -105,7 +105,7 @@ function onCreate()
         for (grid in grids)
             for (note in grid.notes)
                 if (notesSelector.overlaps(note.note))
-                    note.selected = true;
+                    note.selected = Controls.CONTROL ? !note.selected : true;
     };
     add(notesSelector);
 

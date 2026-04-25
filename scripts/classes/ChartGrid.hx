@@ -105,7 +105,7 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
 
         if (!pointer.visible)
         {
-            if (Controls.MOUSE_P)
+            if (Controls.MOUSE_P && !Controls.SHIFT && !Controls.CONTROL)
                 deSelectNotes();
 
             return;
