@@ -22,7 +22,7 @@ final songRoute:String;
 
 function new(?song:String = 'demise', ?diff:String = 'normal', ?chart:ALESong)
 {
-    CHART = chart ?? Json.parse(File.getContent('chart.json')) ?? Formatter.getSong(song, diff);
+    CHART = chart ?? Paths.json('chart') ?? Formatter.getSong(song, diff);
 
     Conductor.calculateBPMChanges(CHART);
 
@@ -253,7 +253,7 @@ function updateControls(elapsed:Float)
             }
         }
 
-        File.saveContent('chart.json', Json.stringify(result));
+        File.saveContent(Paths.library.roots[0] + '/chart.json', Json.stringify(result));
     }
 }
 
