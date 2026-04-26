@@ -3,6 +3,8 @@ package;
 import ale.ui.UIUtils;
 import ale.ui.Tab;
 
+import flixel.FlxObject;
+
 /**
  * The whole damn game was made using RuleScript
  * @see https://github.com/Kriptel/RuleScript/tree/dev
@@ -27,10 +29,10 @@ import ale.ui.Tab;
 
     public static final UI_MARGIN:Int = 25;
 
-    public static function setToMargin(obj:FlxSprite, ?right:Bool = false, ?down:Bool = false)
+    public static function setToMargin(obj:FlxSprite, ?right:Bool = false, ?down:Bool = false, ?screen:FlxObject)
     {
-        obj.x = right ? FlxG.width - obj.width - UI_MARGIN : UI_MARGIN;
-        obj.y = down ? FlxG.height - obj.height - UI_MARGIN : UI_MARGIN;
+        obj.x = right ? (screen == null ? FlxG.width : screen.x + screen.width) - obj.width - UI_MARGIN : (screen == null ? 0 : screen.x) + UI_MARGIN;
+        obj.y = down ? (screen == null ? FlxG.height : screen.y + screen.height) - obj.height - UI_MARGIN : (screen == null ? 0 : screen.y) + UI_MARGIN;
 
         if (obj is Tab)
             obj.y += UIUtils.OBJECT_SIZE;

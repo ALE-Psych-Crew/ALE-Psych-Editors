@@ -26,7 +26,11 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
 {
     public var config:JsonStrumLine;
 
+    public var id:String;
+
     public var grid:MouseSprite;
+
+    public var lines:FlxTypedSpriteGroup<FlxSprite>;
     
     public var pointer:FlxSprite;
 
@@ -36,13 +40,15 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
 
     public var sustain:ChartNote;
 
-    public function new(data:ALESongStrumLine)
+    public function new(data:String)
     {
         Conductor.sectionHit.add(onSectionHit);
      
         super();
 
-        this.config = Formatter.getStrumLine(data.type);
+        this.config = Formatter.getStrumLine(data);
+
+        id = data;
 
         grid = new MouseSprite();
         grid.antialiasing = false;
@@ -58,6 +64,9 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
         };
 
         grid.onOverlapChange(false);
+
+        lines = new FlxTypedSpriteGroup<FlxSprite>();
+        add(lines);
 
         notes = new FlxTypedSpriteGroup<ChartNote>();
         add(notes);
@@ -182,6 +191,16 @@ class ChartGrid extends scripting.haxe.ScriptedFlxSpriteGroup
             UIUtils.adjustColorBrightness(UIUtils.COLOR, -25),
             UIUtils.adjustColorBrightness(UIUtils.COLOR, -60)
         );
+
+        for (line in lines.members.copy())
+        {
+            line.destroy();
+
+            lines.remove(line, true);
+        }
+
+        for (i in 1...Conductor.beatsPerSection)
+            lines.add(new FlxSprite(0, i * EditorUtil.NOTE_SIZE * Conductor.stepsPerBeat).makeGraphic(grid.width, 2, UIUtils.adjustColorBrightness(UIUtils.COLOR, 25)));
     }
 
     var notePool:GenericStack<ChartNote> = new GenericStack<ChartNote>();

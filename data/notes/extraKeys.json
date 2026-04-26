@@ -1,0 +1,35 @@
+{
+    "images": [
+        "extraKeys"
+    ],
+    "type": "sheet",
+    "animations": [
+        {
+            "name": "leftNote"
+        },
+        {
+            "name": "downNote"
+        },
+        {
+            "name": "rombusNote"
+        },
+        {
+            "name": "upNote"
+        },
+        {
+            "name": "rightNote"
+        },
+        {
+            "name": "sustain"
+        },
+        {
+            "name": "end"
+        }
+    ],
+    "properties": {
+        "scale": {
+            "x": 0.7,
+            "y": 0.7
+        }
+    }
+}

@@ -130,8 +130,6 @@ class ChartNote extends scripting.haxe.ScriptedFlxSpriteGroup
         
         if (music.playing && music.time >= time && !hit)
         {
-            EditorUtil.playSFX('noteHit');
-
             hit = true;
         }
 

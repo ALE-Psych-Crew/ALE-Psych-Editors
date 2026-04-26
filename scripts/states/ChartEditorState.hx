@@ -10,6 +10,8 @@ import utils.Formatter;
 
 import EditorUtil;
 
+using StringTools;
+
 var music(get, never):FlxSound;
 function get_music():FlxSound
     return FlxG.sound.music;
@@ -18,9 +20,9 @@ final CHART:ALESong;
 
 final songRoute:String;
 
-function new(?song:String = 'fresh', ?diff:String = 'hard', ?chart:ALESong)
+function new(?song:String = 'demise', ?diff:String = 'normal', ?chart:ALESong)
 {
-    CHART = chart ?? Formatter.getSong(song, diff);
+    CHART = chart ?? Json.parse(File.getContent('chart.json')) ?? Formatter.getSong(song, diff);
 
     Conductor.calculateBPMChanges(CHART);
 
@@ -124,7 +126,7 @@ function onCreate()
 
 function createGrid(data:ALESongStrumLine)
 {
-    grids.add(new ChartGrid(data));
+    grids.add(new ChartGrid(data.file));
 
     var curOffset:Int = 0;
 
@@ -201,6 +203,58 @@ function updateControls(elapsed:Float)
 
         music.time += Conductor.sectionCrochet * (justPressedKey(FlxKey.A) ? -1 : 1);
     }
+
+    if (Controls.CONTROL && justPressedKey(FlxKey.S))
+    {
+        final result = {
+            format: 'ale-chart-v0.1',
+            speed: 2,
+            events: [],
+            sections: [],
+            beatsPerSection: 4,
+            stepsPerBeat: 4,
+            bpm: Conductor.bpm,
+            strumLines: []
+        }
+
+        for (index => grid in grids.members)
+        {
+            result.strumLines.push({
+                visible: true,
+                position: {
+                    x: 92,
+                    y: 50
+                },
+                rightToLeft: true,
+                file: grid.id,
+                type: 'player',
+                characters: ['bf']
+            });
+
+            for (sectionIndex => section in grid.sections)
+            {
+                if (section == null)
+                    continue;
+                    
+                result.sections[sectionIndex] ??= {
+                    notes: [],
+                    camera: [0, 0],
+                    bpm: 150,
+                    changeBPM: false
+                };
+
+                for (note in section)
+                {
+                    if (note != null)
+                    {
+                        result.sections[sectionIndex].notes.push([note.time, note.data, note.length, note.type, index, 0]);
+                    }
+                }
+            }
+        }
+
+        File.saveContent('chart.json', Json.stringify(result));
+    }
 }
 
 function updateMusic()
@@ -229,7 +283,10 @@ function updateCamera()
 
 var mainTab:Tab;
 
-var mainTabSongBPM:DropDownMenu;
+var mainTabSectionBPM:DropDownMenu;
+
+var mainTabSongGrid:Button;
+var mainTabSongGridType:DropDownMenu;
 
 var conductorTab:Tab;
 var conductorTabText:FlxText;
@@ -239,23 +296,36 @@ function initUI()
     uiGroup = new FlxTypedGroup<FlxSprite>();
     add(uiGroup);
 
-    mainTab = new MultiTab(0, 0, 300, 250, ['Charting', 'Note', 'Section']);
-    mainTab.curGroup = 'Section';
+    mainTab = new MultiTab(0, 0, 350, 250, ['Charting', 'Note', 'Section', 'Song']);
+    mainTab.curGroup = 'Song';
     uiGroup.add(mainTab);
-
     EditorUtil.setToMargin(mainTab, true);
 
-    mainTabSongBPM = new NumericStepper(10, 10, 1, 1000, Conductor.bpm, 0.1);
 
-    mainTab.addObj('Section', EditorUtil.createLabel(mainTabSongBPM, 'BPM'));
-    mainTab.addObj('Section', mainTabSongBPM);
+    mainTabSectionBPM = new NumericStepper(10, 10, 1, 1000, Conductor.bpm, 0.1);
+
+    mainTab.addObj('Section', EditorUtil.createLabel(mainTabSectionBPM, 'BPM'));
+    mainTab.addObj('Section', mainTabSectionBPM);
+
+    
+    mainTabSongGrid = new Button(0, 0, 'Create Grid');
+    mainTabSongGrid.releaseCallback = () -> {
+        createGrid(mainTabSongGridType.value);
+    };
+    mainTab.addObj('Song', mainTabSongGrid);
+    EditorUtil.setToMargin(mainTabSongGrid, false, false, mainTab);
+
+    mainTabSongGridType = new DropDownMenu(0, 0, [for (file in Paths.readDirectory('data/strumLines')) if (file.endsWith('.json')) file.substr(0, file.length - 5)]);
+    mainTab.addObj('Song', mainTabSongGridType);
+    mainTabSongGridType.value = mainTabSongGridType.options[0];
+    EditorUtil.setToMargin(mainTabSongGridType, true, false, mainTab);
+
 
     conductorTabText = new FlxText(10, 10, 0, [for (i in 0...6) ' '].join('\n'), 15);
     conductorTabText.font = UIUtils.FONT;
 
     conductorTab = new Tab(0, 0, 170, conductorTabText.height + 20, 'Conductor');
     uiGroup.add(conductorTab);
-
     EditorUtil.setToMargin(conductorTab, true, true);
 
     conductorTab.add(conductorTabText);
