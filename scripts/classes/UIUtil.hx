@@ -7,6 +7,9 @@ using StringTools;
 
 class UIUtil
 {
+    public static final MAX:Int = 1.79e+308;
+    public static final MIN:Int = -MAX;
+
     static var jsonExt(get, never):String;
     static function get_jsonExt():String
         return Paths?.config[FileType.JSON]?.postfix ?? '.json';
